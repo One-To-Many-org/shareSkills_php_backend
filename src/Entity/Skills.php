@@ -4,7 +4,6 @@ namespace App\Entity;
 
 use App\Repository\SkillsRepository;
 use Doctrine\ORM\Mapping as ORM;
-
 /**
  * @ORM\Entity(repositoryClass=SkillsRepository::class)
  */
