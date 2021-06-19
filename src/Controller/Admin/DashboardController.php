@@ -2,9 +2,11 @@
 
 namespace App\Controller\Admin;
 
+use App\Entity\Experience;
 use App\Entity\Field;
 use App\Entity\Level;
 use App\Entity\Skills;
+use App\Entity\Trainning;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Dashboard;
 use EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractDashboardController;
@@ -37,6 +39,8 @@ class DashboardController extends AbstractDashboardController
         yield MenuItem::linkToCrud('Skills', 'fas fa-graduation-cap', Skills::class);
         yield MenuItem::linkToCrud('Field', 'fas fa-tags', Field::class);
         yield MenuItem::linkToCrud('Level', 'fas fa-layer-group', Level::class);
+        yield MenuItem::linkToCrud('Trainning', 'fas fa-book', Trainning::class);
+        yield MenuItem::linkToCrud('Experience', 'fas fa-award', Experience::class);
         // yield MenuItem::linkToCrud('The Label', 'fas fa-list', EntityClass::class);
     }
 }
