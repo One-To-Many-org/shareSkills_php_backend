@@ -3,10 +3,13 @@
 namespace App\Entity;
 
 use App\Repository\CityRepository;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Symfony\Component\Validator\Constraints as Assert;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
  * @ORM\Entity(repositoryClass=CityRepository::class)
+ * @UniqueEntity(fields={"name","country"}, message="It looks like this city already exist!")
  */
 class City
 {
@@ -28,6 +31,11 @@ class City
      */
     private $country;
 
+    /**
+     * @ORM\Column(type="string", length=150,nullable=true)
+     */
+    private $fullName;
+
 
     public function getId(): ?int
     {
@@ -42,7 +50,7 @@ class City
     public function setName(string $name): self
     {
         $this->name = $name;
-
+        $this->setFullName ();
         return $this;
     }
 
@@ -53,12 +61,30 @@ class City
     public function getCountry(): ?Country
     {
         return $this->country;
+
     }
 
     public function setCountry(?Country $country): self
     {
-        $this->country = $country;
 
+        $this->country = $country;
+        $this->setFullName ();
         return $this;
     }
+
+    public function getFullName(): ?string
+    {
+        $this->setFullName ();
+        return $this->fullName;
+    }
+
+    public function setFullName()
+    {
+        if(!$this->fullName && $this->name && $this->country){
+            $this->fullName =$this->name.' ('.$this->country->getName().')';
+        }
+        return $this;
+    }
+
+
 }

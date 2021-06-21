@@ -7,9 +7,9 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 /**
  * @ORM\Entity(repositoryClass=SectionRepository::class)
- * @ORM\InheritanceType("JOINED")
+ * @ORM\InheritanceType("SINGLE_TABLE")
  * @ORM\DiscriminatorColumn(name="type", type="string", length=100)
- * @ORM\DiscriminatorMap({"section" = "Section","trainning" = "Trainning", "experience" = "Experience"})
+ * @ORM\DiscriminatorMap({"section" = "Section","training" = "Training", "experience" = "Experience"})
  */
  class Section
 {
@@ -60,20 +60,26 @@ use Symfony\Component\Validator\Constraints as Assert;
      */
     private $endDate;
 
-    /**
-     * @ORM\Column(type="datetime_immutable")
-     */
-    private $createdAt;
-
-    /**
-     * @ORM\Column(type="datetime")
-     */
-    private $updatedAt;
+     /**
+      * @ORM\ManyToOne(targetEntity=User::class)
+      * @ORM\JoinColumn(nullable=false)
+      */
+     private $user;
 
     /**
      * @ORM\Column(type="text", nullable=true)
      */
     private $description;
+
+     /**
+      * @ORM\Column(type="datetime_immutable")
+      */
+     private $createdAt;
+
+     /**
+      * @ORM\Column(type="datetime")
+      */
+     private $updatedAt;
 
     public function getId(): ?int
     {
@@ -219,4 +225,15 @@ use Symfony\Component\Validator\Constraints as Assert;
 
         return $this;
     }
+     public function getUser(): ?User
+     {
+         return $this->user;
+     }
+
+     public function setUser(?User $user): self
+     {
+         $this->user = $user;
+
+         return $this;
+     }
 }

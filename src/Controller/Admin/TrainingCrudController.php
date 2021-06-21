@@ -2,18 +2,19 @@
 
 namespace App\Controller\Admin;
 
-use App\Entity\Trainning;
+use App\Entity\Training;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
+use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IdField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextareaField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 
-class TrainningCrudController extends AbstractCrudController
+class TrainingCrudController extends AbstractCrudController
 {
     public static function getEntityFqcn(): string
     {
-        return Trainning::class;
+        return Training::class;
     }
 
     public function configureFields(string $pageName): iterable
@@ -28,6 +29,7 @@ class TrainningCrudController extends AbstractCrudController
             TextField::new('Title'),
             DateTimeField::new('StartedDate'),
             DateTimeField::new('EndDate'),
+            AssociationField::new ('user'),
             TextareaField::new('description'),
             DateTimeField::new('createdAt')->onlyWhenCreating (),
             DateTimeField::new('updatedAt'),

@@ -8,5 +8,4 @@ use Doctrine\ORM\Mapping as ORM;
  */
 class Experience extends Section
 {
-
 }

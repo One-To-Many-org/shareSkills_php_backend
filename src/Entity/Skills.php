@@ -4,10 +4,14 @@ namespace App\Entity;
 
 use App\Repository\SkillsRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 /**
  * @ORM\Entity(repositoryClass=SkillsRepository::class)
+ * @ORM\InheritanceType("SINGLE_TABLE")
+ * @ORM\DiscriminatorColumn(name="status", type="string", length=150)
+ * @ORM\DiscriminatorMap({"skills" = "Skills","ownSkill" = "OwnSkill", "searchedSkill" = "SearchedSkill"})
  */
-class Skills
+abstract class Skills
 {
     /**
      * @ORM\Id
@@ -19,17 +23,12 @@ class Skills
     /**
      * @ORM\ManyToOne(targetEntity=Field::class, inversedBy="skills")
      */
-    private $Field;
-
-    /**
-     * @ORM\Column(type="string", length=150)
-     */
-    private $status;
+    private $field;
 
     /**
      * @ORM\ManyToOne(targetEntity=Level::class, inversedBy="skills")
      */
-    private $Level;
+    private $level;
 
     /**
      * @ORM\Column(type="text", nullable=true)
@@ -46,6 +45,7 @@ class Skills
      */
     private $updatedAt;
 
+
     public function getId(): ?int
     {
         return $this->id;
@@ -53,16 +53,16 @@ class Skills
 
     public function getField(): ?Field
     {
-        return $this->Field;
+        return $this->field;
     }
 
-    public function setField(?Field $Field): self
+    public function setField(?Field $field): self
     {
-        $this->Field = $Field;
+        $this->field = $field;
 
         return $this;
     }
-
+/**
     public function getStatus(): ?string
     {
         return $this->status;
@@ -74,15 +74,16 @@ class Skills
 
         return $this;
     }
+ * */
 
     public function getLevel(): ?Level
     {
-        return $this->Level;
+        return $this->level;
     }
 
-    public function setLevel(?Level $Level): self
+    public function setLevel(?Level $level): self
     {
-        $this->Level = $Level;
+        $this->level = $level;
 
         return $this;
     }

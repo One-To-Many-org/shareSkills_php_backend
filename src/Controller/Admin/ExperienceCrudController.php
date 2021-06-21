@@ -5,6 +5,7 @@ namespace App\Controller\Admin;
 use App\Entity\Experience;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\CountryField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IdField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextareaField;
@@ -22,12 +23,13 @@ class ExperienceCrudController extends AbstractCrudController
             IdField::new('id')->hideOnForm ()->hideOnIndex (),
             TextField::new('Institution')->setLabel ('Company'),
             TextField::new('City'),
-            TextField::new('Country'),
+            CountryField::new('Country'),
             TextField::new('Adresse'),
             TextField::new('Qualification')->setLabel ('Poste'),
             TextField::new('Title'),
             DateTimeField::new('StartedDate'),
             DateTimeField::new('EndDate'),
+            AssociationField::new ('user'),
             TextareaField::new('description'),
             DateTimeField::new('createdAt')->onlyWhenCreating (),
             DateTimeField::new('updatedAt'),

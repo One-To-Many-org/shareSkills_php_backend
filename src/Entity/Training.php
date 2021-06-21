@@ -6,7 +6,6 @@ use Doctrine\ORM\Mapping as ORM;
 /**
    @ORM\Entity()
  */
-class Trainning extends Section
+class Training extends Section
 {
-
 }

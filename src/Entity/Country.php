@@ -5,10 +5,13 @@ namespace App\Entity;
 use App\Repository\CountryRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Symfony\Component\Validator\Constraints as Assert;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
  * @ORM\Entity(repositoryClass=CountryRepository::class)
+ * @UniqueEntity(fields={"name"}, message="It looks like this country already exist!")
  */
 class Country
 {
@@ -58,7 +61,7 @@ class Country
     /**
      * @return Collection|City[]
      */
-    public function getCities(): Collection
+    public function getCities():Collection
     {
         return $this->cities;
     }
@@ -83,5 +86,20 @@ class Country
         }
 
         return $this;
+    }
+
+    public function onSerialize(){
+        $this->cities=$this->cities->toArray ();
+        /**
+        $properties=get_class_vars (get_class ($this));
+
+        foreach ($properties as $property){
+
+            if($property instanceof Collection){
+                $propertyName=get_ob
+                $this->{}
+            }
+        }
+        **/
     }
 }

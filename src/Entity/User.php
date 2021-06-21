@@ -3,6 +3,12 @@
 namespace App\Entity;
 
 use App\Repository\UserRepository;
+use DateTimeImmutable;
+use DateTimeInterface;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
+use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Constraints\Email;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -18,9 +24,9 @@ class User
     private $id;
 
     /**
-     * @ORM\Column(type="string", length=100)
+     * @ORM\Column(type="string", length=100,nullable=true)
      */
-    private $login;
+    private $userName;
 
     /**
      * @ORM\Column(type="string", length=255)
@@ -35,17 +41,19 @@ class User
     /**
      * @ORM\Column(type="string", length=150)
      */
-    private $LastName;
+    private $lastName;
 
     /**
-     * @ORM\Column(type="string", length=100)
+     * @ORM\Column(name="email", type="string", length=100, unique=true)
+     * @Assert\Email
      */
+
     private $email;
 
     /**
      * @ORM\Column(type="string", length=50, nullable=true)
      */
-    private $Phone;
+    private $phone;
 
     /**
      * @ORM\Column(type="date")
@@ -55,41 +63,80 @@ class User
     /**
      * @ORM\Column(type="string", length=100, nullable=true)
      */
-    private $City;
+    private $city;
 
     /**
-     * @ORM\Column(type="string", length=100)
+     * @ORM\Column(type="string", length=255,nullable=true)
      */
-    private $Country;
+    private $adresse;
 
     /**
-     * @ORM\Column(type="string", length=255)
+     * @ORM\Column(type="string", length=100,columnDefinition="ENUM('Mr', 'Mme','other')")
      */
-    private $Adresse;
-
-    /**
-     * @ORM\Column(type="string", length=100)
-     */
-    private $Gender;
+    private $gender;
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
      */
     private $picturesPath;
 
+    /**
+     * @ORM\Column(type="text", nullable=true)
+     */
+    private $profileDescription;
+
+    /**
+     * @ORM\OneToMany(targetEntity=Training::class, mappedBy="user",cascade={"remove","persist"})
+     */
+    private $trainings;
+
+    /**
+     * @ORM\OneToMany(targetEntity=Experience::class, mappedBy="user",cascade={"remove","persist"})
+     */
+    private $experiences;
+
+    /**
+     * @ORM\OneToMany(targetEntity=OwnSkill::class, mappedBy="user",cascade={"remove","persist"})
+     */
+    private $ownSkills;
+
+    /**
+     * @ORM\OneToMany(targetEntity=SearchedSkill::class, mappedBy="user",cascade={"remove","persist"})
+     */
+    private $searchedSkills;
+
+    /**
+     * @ORM\Column(type="datetime_immutable")
+     */
+    private $createdAt;
+
+    /**
+     * @ORM\Column(type="datetime")
+     */
+    private $updatedAt;
+
+    public function __construct()
+    {
+        $this->trainings = new ArrayCollection();
+        $this->experiences = new ArrayCollection();
+        $this->ownSkills = new ArrayCollection();
+        $this->searchedSkills = new ArrayCollection();
+        $this->birthDate=new \DateTime('22-07-1993');
+    }
+
     public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function getLogin(): ?string
+    public function getUserName(): ?string
     {
-        return $this->login;
+        return $this->userName;
     }
 
-    public function setLogin(string $login): self
+    public function setUserName(string $userName): self
     {
-        $this->login = $login;
+        $this->userName = $userName;
 
         return $this;
     }
@@ -120,12 +167,12 @@ class User
 
     public function getLastName(): ?string
     {
-        return $this->LastName;
+        return $this->lastName;
     }
 
     public function setLastName(string $LastName): self
     {
-        $this->LastName = $LastName;
+        $this->lastName = $LastName;
 
         return $this;
     }
@@ -144,22 +191,22 @@ class User
 
     public function getPhone(): ?string
     {
-        return $this->Phone;
+        return $this->phone;
     }
 
-    public function setPhone(?string $Phone): self
+    public function setPhone(?string $phone): self
     {
-        $this->Phone = $Phone;
+        $this->phone = $phone;
 
         return $this;
     }
 
-    public function getBirthDate(): ?\DateTimeInterface
+    public function getBirthDate(): ?DateTimeInterface
     {
         return $this->birthDate;
     }
 
-    public function setBirthDate(\DateTimeInterface $birthDate): self
+    public function setBirthDate(DateTimeInterface $birthDate): self
     {
         $this->birthDate = $birthDate;
 
@@ -168,48 +215,36 @@ class User
 
     public function getCity(): ?string
     {
-        return $this->City;
+        return $this->city;
     }
 
-    public function setCity(?string $City): self
+    public function setCity(?string $city): self
     {
-        $this->City = $City;
-
-        return $this;
-    }
-
-    public function getCountry(): ?string
-    {
-        return $this->Country;
-    }
-
-    public function setCountry(string $Country): self
-    {
-        $this->Country = $Country;
+        $this->city = $city;
 
         return $this;
     }
 
     public function getAdresse(): ?string
     {
-        return $this->Adresse;
+        return $this->adresse;
     }
 
-    public function setAdresse(?string $Adresse): self
+    public function setAdresse(?string $adresse): self
     {
-        $this->Adresse = $Adresse;
+        $this->adresse = $adresse;
 
         return $this;
     }
 
     public function getGender(): ?string
     {
-        return $this->Gender;
+        return $this->gender;
     }
 
-    public function setGender(string $Gender): self
+    public function setGender(string $gender): self
     {
-        $this->Gender = $Gender;
+        $this->gender = $gender;
 
         return $this;
     }
@@ -224,5 +259,180 @@ class User
         $this->picturesPath = $picturesPath;
 
         return $this;
+    }
+
+    public function getProfileDescription(): ?string
+    {
+        return $this->profileDescription;
+    }
+
+    public function setProfileDescription(?string $profileDescription): self
+    {
+        $this->profileDescription = $profileDescription;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Training[]
+     */
+    public function getTrainings(): Collection
+    {
+        return $this->trainings;
+    }
+
+    public function addTrainings(Training $training): self
+    {
+        if (!$this->trainings->contains($training)) {
+            $this->trainings[] = $training;
+            $training->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeTrainings(Training $training): self
+    {
+        if ($this->trainings->removeElement($training)) {
+            // set the owning side to null (unless already changed)
+            if ($training->getUser() === $this) {
+                $training->setUser(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Experience[]
+     */
+    public function getExperiences(): Collection
+    {
+        return $this->experiences;
+    }
+
+    public function addExperience(Experience $experience): self
+    {
+        if (!$this->experiences->contains($experience)) {
+            $this->experiences[] = $experience;
+            $experience->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeExperience(Experience $experience): self
+    {
+        if ($this->experiences->removeElement($experience)) {
+            // set the owning side to null (unless already changed)
+            if ($experience->getUser() === $this) {
+                $experience->setUser(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|OwnSkill[]
+     */
+    public function getOwnSkills(): Collection
+    {
+        return $this->ownSkills;
+    }
+
+    public function addOwnSkill(OwnSkill $ownSkill): self
+    {
+        if (!$this->ownSkills->contains($ownSkill)) {
+            $this->ownSkills[] = $ownSkill;
+            $ownSkill->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeOwnSkill(OwnSkill $ownSkill): self
+    {
+        if ($this->ownSkills->removeElement($ownSkill)) {
+            // set the owning side to null (unless already changed)
+            if ($ownSkill->getUser() === $this) {
+                $ownSkill->setUser(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|SearchedSkill[]
+     */
+    public function getSearchedSkills(): Collection
+    {
+        return $this->searchedSkills;
+    }
+
+    public function addSearchedSkill(SearchedSkill $searchedSkill): self
+    {
+        if (!$this->searchedSkills->contains($searchedSkill)) {
+            $this->searchedSkills[] = $searchedSkill;
+            $searchedSkill->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeSearchedSkill(SearchedSkill $searchedSkill): self
+    {
+        if ($this->searchedSkills->removeElement($searchedSkill)) {
+            // set the owning side to null (unless already changed)
+            if ($searchedSkill->getUser() === $this) {
+                $searchedSkill->setUser(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return DateTimeImmutable
+     */
+    public function getCreatedAt(): ?DateTimeImmutable
+    {
+        return $this->createdAt;
+    }
+
+    /**
+     * @param DateTimeImmutable $createdAt
+     * @return $this
+     */
+    public function setCreatedAt(DateTimeImmutable $createdAt): self
+    {
+        $this->createdAt = $createdAt;
+
+        return $this;
+    }
+
+    /**
+     * @return DateTimeInterface
+     */
+    public function getUpdatedAt(): ?DateTimeInterface
+    {
+        return $this->updatedAt;
+    }
+
+    /**
+     * @param DateTimeInterface $updatedAt
+     * @return $this
+     */
+    public function setUpdatedAt(DateTimeInterface $updatedAt): self
+    {
+        $this->updatedAt = $updatedAt;
+
+        return $this;
+    }
+
+    public function __toString() {
+        //return $this->firstName.''.$this->lastName;
+        return $this->email;
     }
 }
