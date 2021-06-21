@@ -26,7 +26,7 @@ class ExperienceCrudController extends AbstractCrudController
             CountryField::new('Country'),
             TextField::new('Adresse'),
             TextField::new('Qualification')->setLabel ('Poste'),
-            TextField::new('Title'),
+            TextField::new('Title')->hideOnIndex (),
             DateTimeField::new('StartedDate'),
             DateTimeField::new('EndDate'),
             AssociationField::new ('user'),
