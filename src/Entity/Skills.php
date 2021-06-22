@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\SkillsRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Serializer\Annotation\Groups;
 /**
  * @ORM\Entity(repositoryClass=SkillsRepository::class)
  * @ORM\InheritanceType("SINGLE_TABLE")
@@ -17,21 +18,25 @@ abstract class Skills
      * @ORM\Id
      * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
+     * @Groups({"full_user"})
      */
     private $id;
 
     /**
      * @ORM\ManyToOne(targetEntity=Field::class, inversedBy="skills")
+     * @Groups({"full_user"})
      */
     private $field;
 
     /**
      * @ORM\ManyToOne(targetEntity=Level::class, inversedBy="skills")
+     * @Groups({"full_user"})
      */
     private $level;
 
     /**
      * @ORM\Column(type="text", nullable=true)
+     * @Groups({"full_user"})
      */
     private $description;
 
@@ -42,6 +47,7 @@ abstract class Skills
 
     /**
      * @ORM\Column(type="datetime")
+     * @Groups({"full_user"})
      */
     private $updatedAt;
 

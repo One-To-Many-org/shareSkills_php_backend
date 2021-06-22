@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\SectionRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Serializer\Annotation\Groups;
 /**
  * @ORM\Entity(repositoryClass=SectionRepository::class)
  * @ORM\InheritanceType("SINGLE_TABLE")
@@ -17,46 +18,55 @@ use Symfony\Component\Validator\Constraints as Assert;
      * @ORM\Id
      * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
+     * @Groups({"full_user"})
      */
     private $id;
 
     /**
      * @ORM\Column(type="string", length=255)
+     * @Groups({"full_user"})
      */
     private $institution;
 
     /**
      * @ORM\Column(type="string", length=100, nullable=true)
+     * @Groups({"full_user"})
      */
     private $city;
 
     /**
      * @ORM\Column(type="string", length=100, nullable=true)
+     * @Groups({"full_user"})
      */
     private $country;
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
+     * @Groups({"full_user"})
      */
     private $adresse;
 
     /**
      * @ORM\Column(type="string", length=255)
+     * @Groups({"full_user"})
      */
     private $qualification;
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
+     * @Groups({"full_user"})
      */
     private $title;
 
     /**
      * @ORM\Column(type="date", nullable=true)
+     * @Groups({"full_user"})
      */
     private $startedDate;
 
     /**
      * @ORM\Column(type="date", nullable=true)
+     * @Groups({"full_user"})
      */
     private $endDate;
 
@@ -68,6 +78,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 
     /**
      * @ORM\Column(type="text", nullable=true)
+     * @Groups({"full_user"})
      */
     private $description;
 
@@ -78,6 +89,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 
      /**
       * @ORM\Column(type="datetime")
+      * @Groups({"full_user"})
       */
      private $updatedAt;
 

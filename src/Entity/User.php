@@ -9,6 +9,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Constraints\Email;
+use Symfony\Component\Serializer\Annotation\Groups;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -20,11 +21,13 @@ class User
      * @ORM\Id
      * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
+     * @Groups({"full_user", "short_user"})
      */
     private $id;
 
     /**
      * @ORM\Column(type="string", length=100,nullable=true)
+     * @Groups({"full_user", "short_user"})
      */
     private $userName;
 
@@ -35,73 +38,87 @@ class User
 
     /**
      * @ORM\Column(type="string", length=150)
+     * @Groups({"full_user", "short_user"})
      */
     private $firstName;
 
     /**
      * @ORM\Column(type="string", length=150)
+     * @Groups({"full_user", "short_user"})
      */
     private $lastName;
 
     /**
      * @ORM\Column(name="email", type="string", length=100, unique=true)
      * @Assert\Email
+     * @Groups({"full_user", "short_user"})
      */
 
     private $email;
 
     /**
      * @ORM\Column(type="string", length=50, nullable=true)
+     * @Groups({"full_user", "short_user"})
      */
     private $phone;
 
     /**
      * @ORM\Column(type="date")
+     * @Groups({"full_user", "short_user"})
      */
     private $birthDate;
 
     /**
      * @ORM\Column(type="string", length=100, nullable=true)
+     * @Groups({"full_user", "short_user"})
      */
     private $city;
 
     /**
      * @ORM\Column(type="string", length=255,nullable=true)
+     * @Groups({"full_user", "short_user"})
      */
     private $adresse;
 
     /**
      * @ORM\Column(type="string", length=100,columnDefinition="ENUM('Mr', 'Mme','other')")
+     * @Groups({"full_user", "short_user"})
      */
     private $gender;
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
+     * @Groups({"full_user", "short_user"})
      */
     private $picturesPath;
 
     /**
      * @ORM\Column(type="text", nullable=true)
+     * @Groups({"full_user", "short_user"})
      */
     private $profileDescription;
 
     /**
      * @ORM\OneToMany(targetEntity=Training::class, mappedBy="user",cascade={"remove","persist"})
+     * @Groups({"full_user"})
      */
     private $trainings;
 
     /**
      * @ORM\OneToMany(targetEntity=Experience::class, mappedBy="user",cascade={"remove","persist"})
+     * @Groups({"full_user"})
      */
     private $experiences;
 
     /**
      * @ORM\OneToMany(targetEntity=OwnSkill::class, mappedBy="user",cascade={"remove","persist"})
+     * @Groups({"full_user"})
      */
     private $ownSkills;
 
     /**
      * @ORM\OneToMany(targetEntity=SearchedSkill::class, mappedBy="user",cascade={"remove","persist"})
+     * @Groups({"full_user"})
      */
     private $searchedSkills;
 
@@ -112,6 +129,7 @@ class User
 
     /**
      * @ORM\Column(type="datetime")
+     * @Groups({"full_user","short_user"})
      */
     private $updatedAt;
 
