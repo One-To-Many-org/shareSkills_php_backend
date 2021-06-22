@@ -5,7 +5,8 @@ namespace App\Controller;
 use App\Entity\Experience;
 use App\Entity\Section;
 use App\Entity\Skills;
-use App\Entity\Trainning;
+use App\Entity\Training;
+use App\Entity\User;
 use App\Repository\SectionRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -31,5 +32,31 @@ class TestController extends AbstractController
             AbstractNormalizer::ATTRIBUTES => ['id','Fields','status','description', 'Level' => ['id','description']]
         ];
         return $this->json ($allTraining,200,[],$context);
+    }
+
+    /**
+     * @Route("/users/short", name="test_short_users")
+     */
+    public function short_users(EntityManagerInterface $em): Response
+    {
+        $users= $em->getRepository (User::class)->findAll ();
+
+        $context=[
+            'groups'=>'short_user'
+        ];
+        return $this->json ($users,200,[],$context);
+    }
+
+    /**
+     * @Route("/users/full", name="test_users")
+     */
+    public function full_users(EntityManagerInterface $em): Response
+    {
+        $users= $em->getRepository (User::class)->findAll ();
+
+        $context=[
+            'groups'=>'full_user'
+        ];
+        return $this->json ($users,200,[],$context);
     }
 }
