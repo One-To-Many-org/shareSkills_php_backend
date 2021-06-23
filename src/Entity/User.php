@@ -10,10 +10,12 @@ use Doctrine\Common\Collections\Collection;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Constraints\Email;
 use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
  * @ORM\Entity(repositoryClass=UserRepository::class)
+ * @UniqueEntity("apiToken")
  */
 class User
 {
@@ -24,6 +26,11 @@ class User
      * @Groups({"full_user", "short_user"})
      */
     private $id;
+
+    /**
+     * @ORM\Column(type="string", length=255, unique=true, nullable=true)
+     */
+    private $apiToken;
 
     /**
      * @ORM\Column(type="string", length=100,nullable=true)
@@ -67,6 +74,11 @@ class User
      * @Groups({"full_user", "short_user"})
      */
     private $birthDate;
+
+    /**
+     * @ORM\Column(type="json", nullable=true)
+     */
+    private $roles = [];
 
     /**
      * @ORM\Column(type="string", length=100, nullable=true)
@@ -452,5 +464,29 @@ class User
     public function __toString() {
         //return $this->firstName.''.$this->lastName;
         return $this->email;
+    }
+
+    public function getApiToken(): ?string
+    {
+        return $this->apiToken;
+    }
+
+    public function setApiToken(?string $apiToken): self
+    {
+        $this->apiToken = $apiToken;
+
+        return $this;
+    }
+
+    public function getRoles(): ?array
+    {
+        return $this->roles;
+    }
+
+    public function setRoles(?array $roles): self
+    {
+        $roles[] = 'ROLE_USER';
+        $this->roles = $roles;
+        return $this;
     }
 }
