@@ -1,4 +1,33 @@
 lexik_jwt_authentication:
-    secret_key: '%env(resolve:JWT_SECRET_KEY)%'
+    secret_key: '%env(resolve:JWT_SECRET_KEY)%' #fournit dans le .env.local
     public_key: '%env(resolve:JWT_PUBLIC_KEY)%'
     pass_phrase: '%env(JWT_PASSPHRASE)%'
+    token_ttl:        3600 #Le temps avant l'expiration du jeton
+    user_identity_field: email #identifiant à renseigner est email
+
+   # j'ai activé l'extraction quand il est mis dans l'entête et quand il est dans les paramètre de la requête pour des teste par navigateur
+   # la verification dans les cookies est desactivée
+    token_extractors:
+        # recherche un jeton en tant qu'en-tête d'
+        authorization_header:
+            enabled: true
+            prefix: Bearer
+            name: Authorization
+
+        # check token dans un cookie
+        cookie:
+            enabled: false
+            name: BEARER
+
+        # vérifier le jeton dans le paramètre de chaîne de requête si enable est à true
+        # Example : http://127.0.0.1:8000/users/full?bearer=eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpYXQiOjE2MjQ1NTYxMDk
+        query_parameter:
+            enabled: true
+            name: bearer
+
+        # vérifier le jeton dans un cookie
+        split_cookie:
+            enabled: false
+            cookies:
+                - jwt_hp
+                - jwt_s
