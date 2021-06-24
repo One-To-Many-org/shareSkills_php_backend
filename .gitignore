@@ -8,6 +8,7 @@
 /var/
 /migrations/
 /vendor/
+/config/jwt
 .idea/
 ###< symfony/framework-bundle ###
 
