@@ -50,8 +50,15 @@ class UserFixtures extends Fixture
                 ->setUserName ($faker->name.'-'.mt_rand (10,125))
                 ->setPhone ($faker->phoneNumber)
                 ->setAdresse ($faker->address)
+                ->setRoles ([]);
             ;
+          if($i<4){
+              $user->setPassword ("toor");
+              if($i<2){
+                  $user->setRoles (['ROLE_ADMIN']);
+              }
 
+          }
 
             for($j=0; $j<mt_rand (4,8); $j++){
                 $random=mt_rand (0,20);
