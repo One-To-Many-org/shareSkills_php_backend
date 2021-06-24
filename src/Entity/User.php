@@ -7,6 +7,7 @@ use DateTimeImmutable;
 use DateTimeInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Constraints\Email;
 use Symfony\Component\Serializer\Annotation\Groups;
@@ -16,8 +17,9 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * @ORM\Entity(repositoryClass=UserRepository::class)
  * @UniqueEntity("apiToken")
+ * @method string getUserIdentifier()
  */
-class User
+class User implements UserInterface
 {
     /**
      * @ORM\Id
@@ -151,7 +153,8 @@ class User
         $this->experiences = new ArrayCollection();
         $this->ownSkills = new ArrayCollection();
         $this->searchedSkills = new ArrayCollection();
-        $this->birthDate=new \DateTime('22-07-1993');
+        $this->createdAt=new DateTimeImmutable();
+        $this->roles[]='ROLE_USER';
     }
 
     public function getId(): ?int
@@ -178,7 +181,7 @@ class User
 
     public function setPassword(string $password): self
     {
-        $this->password = $password;
+        $this->password = \password_hash ($password,PASSWORD_ARGON2I);
 
         return $this;
     }
@@ -488,5 +491,20 @@ class User
         $roles[] = 'ROLE_USER';
         $this->roles = $roles;
         return $this;
+    }
+
+    public function getSalt()
+    {
+        return null;
+    }
+
+    public function eraseCredentials()
+    {
+        // TODO: Implement eraseCredentials() method.
+    }
+
+    public function __call($name, $arguments)
+    {
+        // TODO: Implement @method string getUserIdentifier()
     }
 }
