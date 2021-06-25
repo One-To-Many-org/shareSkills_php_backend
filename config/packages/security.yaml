@@ -18,15 +18,15 @@ security:
         #c'est le firewall qui permet d'identifier et d'authentifier un anonyme par la méthode json_login  le chemin de controle est dans check_path et doit être déclarée dans routes.yaml
         #le pattern du chemin de ce firewall doit être inclut dans le chemin check_path sinon il dit que la route ne match pas avec le pattern du firewall
         login:
-            pattern:  ^/api/login
+            pattern:  ^/login
             lazy: true
             provider: app_user_provider
             json_login:
-                check_path: /api/login_check
+                check_path: /login_check
                 success_handler: lexik_jwt_authentication.handler.authentication_success
                 failure_handler: lexik_jwt_authentication.handler.authentication_failure
         # c'est un firewall pour la route des utilisateurs avec un guard pour gérer l'autorisation aux ressources selon les rôles
-        malo_api-users:
+        malo_api_users:
             pattern: ^/users/*
             stateless: true
             provider: app_user_provider
@@ -46,7 +46,7 @@ security:
     # Easy way to control access for large sections of your site
     # Note: Only the *first* access control that matches will be used
     access_control:
-        - { path: ^/api/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
         - { path: ^/users/full,       roles: IS_AUTHENTICATED_FULLY }
         - { path: ^/users/short,       roles: ROLE_USER }
         -  { path: ^/users/new,        roles: ROLE_ADMIN }
