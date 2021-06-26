@@ -505,6 +505,13 @@ class User implements UserInterface
 
     public function __call($name, $arguments)
     {
-        // TODO: Implement @method string getUserIdentifier()
     }
+
+    public function isSame(Object $user){
+        if($user instanceof self){
+            return $user->getId ()===$this->getId ();
+        }
+        return false;
+    }
+
 }
