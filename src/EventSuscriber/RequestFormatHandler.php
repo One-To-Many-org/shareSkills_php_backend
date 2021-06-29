@@ -22,12 +22,13 @@ class RequestFormatHandler implements EventSubscriberInterface
     const NO_SUPPORTED_RETURN_TYPE="You don't provide valid accepted for the support format are :   %s verifie that you have correctly type the accepted-type or return-ty without space";
     const ACCEPT='Accept';
     const CONTENT_TYPE='Content-Type';
+    public static $isFormatHandlerController;
 
 
     public static function getSubscribedEvents(): array
     {
         return [
-            RequestEvent::class=>'onKernelRequest',
+           // RequestEvent::class=>'onKernelRequest',
             ResponseEvent::class=>'onKernelResponse',
             ControllerEvent::class=>'onKernelController',
 
@@ -90,7 +91,6 @@ class RequestFormatHandler implements EventSubscriberInterface
             if (empty($errorMessage) && $this->willReceiveData ($request)){
                     $acceptHeader = AcceptHeader::fromString($request->headers->get('Accept'));
                     $accept=$this->resolveAccept ($acceptHeader);
-                     var_dump ($accept);
                     if(empty($accept)){
                         if(count ($acceptHeader->all ())>0){
                             $errorMessage=sprintf (self::NO_SUPPORTED_RETURN_TYPE,$this->getSupportFormatAsString ());
@@ -100,7 +100,6 @@ class RequestFormatHandler implements EventSubscriberInterface
                     }
                    $request->headers->set (self::ACCEPT,$accept);
             }
-
             if(!empty($errorMessage)){
                 $this->redirectToErrorController ($event,$errorMessage);
             }
@@ -115,13 +114,18 @@ class RequestFormatHandler implements EventSubscriberInterface
      */
     public function onKernelResponse(ResponseEvent $event)
     {
-        $contentType=$event->getResponse ()->headers->get (self::CONTENT_TYPE);
-        if(empty($contentType)){
-            $contentType=$event->getRequest ()->headers->get (self::ACCEPT);
-            if($event->getResponse ()->isSuccessful () && empty($content)){
-                $event->getResponse ()->headers->set (self::CONTENT_TYPE,$contentType);
+        $accepts = $event->getRequest ()->getAcceptableContentTypes ();
+
+        if(count ($accepts)<2){
+            $contentType=$event->getResponse ()->headers->get (self::CONTENT_TYPE);
+            if(empty($contentType)){
+                $contentType=$event->getRequest ()->headers->get (self::ACCEPT);
+                if($event->getResponse ()->isSuccessful () && empty($content)){
+                    $event->getResponse ()->headers->set (self::CONTENT_TYPE,$contentType);
+                }
             }
         }
+
     }
 
     /**
