@@ -6,6 +6,7 @@ namespace App\Service;
 
 use App\Entity\Field;
 use App\Entity\Level;
+use App\Entity\Skills;
 use App\Entity\User;
 use App\Exceptions\CustomException;
 use Doctrine\ORM\EntityManagerInterface;
@@ -133,6 +134,9 @@ class ProfileService implements ProfileServiceInterface
         $skills= array_merge ($profile->getOwnSkills ()->toArray (),$profile->getSearchedSkills ()->toArray ());
 
         foreach ($skills as $skill){
+            /**
+             * @var Skills $skill
+             */
             $lDescrition=$skill->getLevelDescription ();
             $fDescription=$skill->getFieldDescription ();
 

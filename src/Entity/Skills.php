@@ -152,9 +152,12 @@ abstract class Skills
     /**
      * @return string
      */
-    public function getFieldDescription(): string
+    public function getFieldDescription()
     {
-        return $this -> fieldDescription?$this->fieldDescription:$this->field ? $this->field->getDescription ():"";
+        if(empty($this -> fieldDescription) && !empty($this->field)){
+           $this->fieldDescription= $this->field->getDescription ();
+        }
+        return $this -> fieldDescription;
     }
 
     /**
@@ -171,7 +174,10 @@ abstract class Skills
      */
     public function getLevelDescription()
     {
-        return $this -> levelDescription?$this -> levelDescription:$this->level?$this->level->getDescription ():"";
+        if(empty($this->levelDescription)&&!empty($this->level)){
+            $this->levelDescription=$this->level->getDescription ();
+        }
+        return $this -> levelDescription;
     }
 
     /**
