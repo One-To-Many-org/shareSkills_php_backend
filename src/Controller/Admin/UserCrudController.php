@@ -36,7 +36,7 @@ class UserCrudController extends AbstractCrudController
             TextField::new('Password')->setRequired (true)->hideOnIndex ()->hideOnDetail (),
             TextField::new('FirstName')->setRequired (true),
             TextField::new('LastName')->setRequired (true),
-            TextField::new ('apiToken')->hideOnIndex ()->hideOnDetail (),
+            TextField::new ('apiToken')->hideOnIndex ()->hideOnDetail ()->hideOnForm (),
             DateField::new('BirthDate')->setRequired (true),
             TextField::new('UserName'),
             ArrayField::new('Roles'),
