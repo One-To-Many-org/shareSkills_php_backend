@@ -27,7 +27,7 @@ security:
                 failure_handler: lexik_jwt_authentication.handler.authentication_failure
         # c'est un firewall pour la route des utilisateurs avec un guard pour gérer l'autorisation aux ressources selon les rôles
         malo_api_users:
-            pattern: ^/users/*
+            pattern: ^/users|profiles/*
             stateless: true
             provider: app_user_provider
             guard:
@@ -49,6 +49,7 @@ security:
         - { path: ^/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
         - { path: ^/users/full,       roles: IS_AUTHENTICATED_FULLY }
         - { path: ^/users/short,       roles: ROLE_USER }
+        -  { path: ^/profiles,       roles: ROLE_USER }
         -  { path: ^/users/new,        roles: ROLE_ADMIN }
         # - { path: ^/admin, roles: ROLE_ADMIN }
         # - { path: ^/profile, roles: ROLE_USER }
