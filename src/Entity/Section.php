@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\SectionRepository;
+use DateTimeImmutable;
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Serializer\Annotation\Groups;
@@ -92,6 +94,13 @@ use Symfony\Component\Serializer\Annotation\Groups;
       * @Groups({"full_user"})
       */
      private $updatedAt;
+
+
+     public function __construct()
+     {
+         $this->createdAt=new DateTimeImmutable();
+         $this->updatedAt=new \DateTime();
+     }
 
     public function getId(): ?int
     {

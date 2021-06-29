@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use App\Repository\SkillsRepository;
+use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Serializer\Annotation\Groups;
@@ -23,16 +24,28 @@ abstract class Skills
     private $id;
 
     /**
+     * @var Field
      * @ORM\ManyToOne(targetEntity=Field::class, inversedBy="skills")
-     * @Groups({"full_user"})
      */
     private $field;
 
     /**
+     * @var Level
      * @ORM\ManyToOne(targetEntity=Level::class, inversedBy="skills")
-     * @Groups({"full_user"})
      */
     private $level;
+
+    /**
+     * @var string
+     * @Groups({"full_user"})
+     */
+    private $fieldDescription;
+
+    /**
+     * @var string
+     * @Groups({"full_user"})
+     */
+    private $levelDescription;
 
     /**
      * @ORM\Column(type="text", nullable=true)
@@ -51,6 +64,12 @@ abstract class Skills
      */
     private $updatedAt;
 
+
+    public function __construct()
+    {
+        $this->createdAt=new DateTimeImmutable();
+        $this->updatedAt=new \DateTime();
+    }
 
     public function getId(): ?int
     {
@@ -127,6 +146,40 @@ abstract class Skills
     {
         $this->updatedAt = $updatedAt;
 
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getFieldDescription(): string
+    {
+        return $this -> fieldDescription?$this->fieldDescription:$this->field ? $this->field->getDescription ():"";
+    }
+
+    /**
+     * @param string $fieldDescription
+     */
+    public function setFieldDescription(string $fieldDescription):self
+    {
+        $this -> fieldDescription = $fieldDescription;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getLevelDescription()
+    {
+        return $this -> levelDescription?$this -> levelDescription:$this->level?$this->level->getDescription ():"";
+    }
+
+    /**
+     * @param string $levelDescription
+     */
+    public function setLevelDescription(string $levelDescription): self
+    {
+        $this -> levelDescription = $levelDescription;
         return $this;
     }
 }
