@@ -11,6 +11,7 @@ use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Constraints\Email;
 use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Serializer\Annotation\MaxDepth;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -79,6 +80,7 @@ class User implements UserInterface
 
     /**
      * @ORM\Column(type="json", nullable=true)
+     * @Groups({"full_user", "short_user"})
      */
     private $roles = [];
 
@@ -113,25 +115,25 @@ class User implements UserInterface
     private $profileDescription;
 
     /**
-     * @ORM\OneToMany(targetEntity=Training::class, mappedBy="user",cascade={"remove","persist"})
+     * @ORM\OneToMany(targetEntity=Training::class, mappedBy="user",cascade={"remove","persist"},fetch="EAGER")
      * @Groups({"full_user"})
      */
     private $trainings;
 
     /**
-     * @ORM\OneToMany(targetEntity=Experience::class, mappedBy="user",cascade={"remove","persist"})
+     * @ORM\OneToMany(targetEntity=Experience::class, mappedBy="user",cascade={"remove","persist"},fetch="EAGER")
      * @Groups({"full_user"})
      */
     private $experiences;
 
     /**
-     * @ORM\OneToMany(targetEntity=OwnSkill::class, mappedBy="user",cascade={"remove","persist"})
+     * @ORM\OneToMany(targetEntity=OwnSkill::class, mappedBy="user",cascade={"remove","persist"},fetch="EAGER")
      * @Groups({"full_user"})
      */
     private $ownSkills;
 
     /**
-     * @ORM\OneToMany(targetEntity=SearchedSkill::class, mappedBy="user",cascade={"remove","persist"})
+     * @ORM\OneToMany(targetEntity=SearchedSkill::class, mappedBy="user",cascade={"remove","persist"},fetch="EAGER")
      * @Groups({"full_user"})
      */
     private $searchedSkills;
@@ -154,6 +156,7 @@ class User implements UserInterface
         $this->ownSkills = new ArrayCollection();
         $this->searchedSkills = new ArrayCollection();
         $this->createdAt=new DateTimeImmutable();
+        $this->updatedAt=new \DateTime();
         $this->roles[]='ROLE_USER';
     }
 
@@ -337,6 +340,22 @@ class User implements UserInterface
     }
 
     /**
+     * @param ArrayCollection |  Training [] $trainings
+     */
+    public function setTrainings($trainings)
+    {
+        $this -> trainings = $trainings instanceof ArrayCollection ?$trainings:new ArrayCollection($trainings);
+
+        foreach ($this->trainings as $training){
+            /**
+             * @var Training $training
+             */
+            $training->setUser ($this);
+        }
+        return $this;
+    }
+
+    /**
      * @return Collection|Experience[]
      */
     public function getExperiences(): Collection
@@ -488,8 +507,9 @@ class User implements UserInterface
 
     public function setRoles(?array $roles): self
     {
-        $roles[] = 'ROLE_USER';
-        $this->roles = $roles;
+        if($roles){
+            $this->roles = $roles;
+        }
         return $this;
     }
 
@@ -513,5 +533,6 @@ class User implements UserInterface
         }
         return false;
     }
+
 
 }
