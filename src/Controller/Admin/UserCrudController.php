@@ -33,7 +33,7 @@ class UserCrudController extends AbstractCrudController
         return [
             IdField::new('id')->hideOnForm ()->hideOnIndex (),
             TextField::new('Email')->setRequired (true),
-            TextField::new('Password')->setRequired (true)->hideOnIndex ()->hideOnDetail (),
+            TextField::new('Password')->setRequired (true)->hideOnIndex ()->hideOnDetail ()->hideOnForm (),
             TextField::new('FirstName')->setRequired (true),
             TextField::new('LastName')->setRequired (true),
             TextField::new ('apiToken')->hideOnIndex ()->hideOnDetail ()->hideOnForm (),
@@ -47,8 +47,8 @@ class UserCrudController extends AbstractCrudController
             ChoiceField::new('Gender')->setChoices (['Mr'=>'Mr','Mme'=>'Mme','other'=>'other'])->setRequired (true),
             TextField::new('PicturesPath')->hideOnIndex (),
             TextareaField::new('ProfileDescription'),
-            DateTimeField::new('createdAt')->onlyWhenCreating (),
-            DateTimeField::new('updatedAt')->hideOnIndex (),
+            DateTimeField::new('createdAt')->hideOnForm (),
+            DateTimeField::new('updatedAt')->hideOnForm (),
         ];
     }
 
