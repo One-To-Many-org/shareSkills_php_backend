@@ -12,6 +12,7 @@ use Symfony\Component\Serializer\Annotation\Groups;
  * @ORM\InheritanceType("SINGLE_TABLE")
  * @ORM\DiscriminatorColumn(name="status", type="string", length=150)
  * @ORM\DiscriminatorMap({"skills" = "Skills","ownSkill" = "OwnSkill", "searchedSkill" = "SearchedSkill"})
+ * @ORM\HasLifecycleCallbacks
  */
 abstract class Skills
 {
@@ -54,12 +55,12 @@ abstract class Skills
     private $description;
 
     /**
-     * @ORM\Column(type="datetime")
+     * @ORM\Column(type="datetime",options={"default": "CURRENT_TIMESTAMP"})
      */
     private $createdAt;
 
     /**
-     * @ORM\Column(type="datetime")
+     * @ORM\Column(type="datetime",options={"default": "CURRENT_TIMESTAMP"})
      * @Groups({"full_user"})
      */
     private $updatedAt;
@@ -187,5 +188,13 @@ abstract class Skills
     {
         $this -> levelDescription = $levelDescription;
         return $this;
+    }
+
+    /**
+     * @ORM\PreUpdate
+     */
+    public function onPreUpdate()
+    {
+        $this->setUpdatedAt (new \DateTime());
     }
 }

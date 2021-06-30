@@ -10,6 +10,7 @@ use Doctrine\ORM\Mapping as ORM;
 
 /**
  * @ORM\Entity(repositoryClass=LevelRepository::class)
+ * * @ORM\HasLifecycleCallbacks
  */
 class Level
 {
@@ -26,12 +27,12 @@ class Level
     private $description;
 
     /**
-     * @ORM\Column(type="datetime")
+     * @ORM\Column(type="datetime",options={"default": "CURRENT_TIMESTAMP"})
      */
     private $createdAt;
 
     /**
-     * @ORM\Column(type="datetime")
+     * @ORM\Column(type="datetime",options={"default": "CURRENT_TIMESTAMP"})
      */
     private $updatedAt;
 
@@ -118,5 +119,13 @@ class Level
 
     public function __toString() {
         return $this->description;
+    }
+
+    /**
+     * @ORM\PreUpdate
+     */
+    public function onPreUpdate()
+    {
+        $this->setUpdatedAt (new \DateTime());
     }
 }

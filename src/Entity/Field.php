@@ -10,6 +10,7 @@ use Symfony\Component\Serializer\Annotation\Groups;
 
 /**
  * @ORM\Entity(repositoryClass=FieldRepository::class)
+ * * @ORM\HasLifecycleCallbacks
  */
 class Field
 {
@@ -26,12 +27,12 @@ class Field
     private $description;
 
     /**
-     * @ORM\Column(type="datetime")
+     * @ORM\Column(type="datetime",options={"default": "CURRENT_TIMESTAMP"})
      */
     private $createdAt;
 
     /**
-     * @ORM\Column(type="datetime")
+     * @ORM\Column(type="datetime",options={"default": "CURRENT_TIMESTAMP"})
      */
     private $updatedAt;
 
@@ -118,5 +119,13 @@ class Field
 
     public function __toString() {
         return $this->description;
+    }
+
+    /**
+     * @ORM\PreUpdate
+     */
+    public function onPreUpdate()
+    {
+        $this->setUpdatedAt (new \DateTime());
     }
 }

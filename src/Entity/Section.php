@@ -13,6 +13,7 @@ use Symfony\Component\Serializer\Annotation\Groups;
  * @ORM\InheritanceType("SINGLE_TABLE")
  * @ORM\DiscriminatorColumn(name="type", type="string", length=100)
  * @ORM\DiscriminatorMap({"section" = "Section","training" = "Training", "experience" = "Experience"})
+ * * @ORM\HasLifecycleCallbacks
  */
  class Section
 {
@@ -85,12 +86,12 @@ use Symfony\Component\Serializer\Annotation\Groups;
     private $description;
 
      /**
-      * @ORM\Column(type="datetime_immutable")
+      * @ORM\Column(type="datetime_immutable",options={"default": "CURRENT_TIMESTAMP"})
       */
      private $createdAt;
 
      /**
-      * @ORM\Column(type="datetime")
+      * @ORM\Column(type="datetime",options={"default": "CURRENT_TIMESTAMP"})
       * @Groups({"full_user"})
       */
      private $updatedAt;
@@ -256,5 +257,12 @@ use Symfony\Component\Serializer\Annotation\Groups;
          $this->user = $user;
 
          return $this;
+     }
+     /**
+      * @ORM\PreUpdate
+      */
+     public function onPreUpdate()
+     {
+         $this->setUpdatedAt (new \DateTime());
      }
 }

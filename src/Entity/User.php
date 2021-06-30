@@ -8,6 +8,7 @@ use DateTimeInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Doctrine\ORM\Mapping\HasLifecycleCallbacks as HasLifecycleCallbacks;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Constraints\Email;
 use Symfony\Component\Serializer\Annotation\Groups;
@@ -18,6 +19,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * @ORM\Entity(repositoryClass=UserRepository::class)
  * @UniqueEntity("apiToken")
+ * @ORM\HasLifecycleCallbacks
  * @method string getUserIdentifier()
  */
 class User implements UserInterface
@@ -115,36 +117,36 @@ class User implements UserInterface
     private $profileDescription;
 
     /**
-     * @ORM\OneToMany(targetEntity=Training::class, mappedBy="user",cascade={"remove","persist"},fetch="EAGER")
+     * @ORM\OneToMany(targetEntity=Training::class, mappedBy="user",cascade={"remove","persist"})
      * @Groups({"full_user"})
      */
     private $trainings;
 
     /**
-     * @ORM\OneToMany(targetEntity=Experience::class, mappedBy="user",cascade={"remove","persist"},fetch="EAGER")
+     * @ORM\OneToMany(targetEntity=Experience::class, mappedBy="user",cascade={"remove","persist"})
      * @Groups({"full_user"})
      */
     private $experiences;
 
     /**
-     * @ORM\OneToMany(targetEntity=OwnSkill::class, mappedBy="user",cascade={"remove","persist"},fetch="EAGER")
+     * @ORM\OneToMany(targetEntity=OwnSkill::class, mappedBy="user",cascade={"remove","persist"})
      * @Groups({"full_user"})
      */
     private $ownSkills;
 
     /**
-     * @ORM\OneToMany(targetEntity=SearchedSkill::class, mappedBy="user",cascade={"remove","persist"},fetch="EAGER")
+     * @ORM\OneToMany(targetEntity=SearchedSkill::class, mappedBy="user",cascade={"remove","persist"})
      * @Groups({"full_user"})
      */
     private $searchedSkills;
 
     /**
-     * @ORM\Column(type="datetime_immutable")
+     * @ORM\Column(type="datetime_immutable",options={"default": "CURRENT_TIMESTAMP"})
      */
     private $createdAt;
 
     /**
-     * @ORM\Column(type="datetime")
+     * @ORM\Column(type="datetime",options={"default": "CURRENT_TIMESTAMP"})
      * @Groups({"full_user","short_user"})
      */
     private $updatedAt;
@@ -155,8 +157,6 @@ class User implements UserInterface
         $this->experiences = new ArrayCollection();
         $this->ownSkills = new ArrayCollection();
         $this->searchedSkills = new ArrayCollection();
-        $this->createdAt=new DateTimeImmutable();
-        $this->updatedAt=new \DateTime();
         $this->roles[]='ROLE_USER';
     }
 
@@ -525,6 +525,14 @@ class User implements UserInterface
 
     public function __call($name, $arguments)
     {
+    }
+
+    /**
+     * @ORM\PreUpdate
+     */
+    public function onPreUpdate()
+    {
+        $this->setUpdatedAt (new \DateTime());
     }
 
     public function isSame(Object $user){
