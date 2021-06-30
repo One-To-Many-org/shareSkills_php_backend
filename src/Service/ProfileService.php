@@ -6,10 +6,13 @@ namespace App\Service;
 
 use App\Entity\Field;
 use App\Entity\Level;
+use App\Entity\Section;
 use App\Entity\Skills;
 use App\Entity\User;
 use App\Exceptions\CustomException;
+use App\Form\PersonneType;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\HeaderBag;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Serializer\Encoder\XmlEncoder;
@@ -27,13 +30,14 @@ class ProfileService implements ProfileServiceInterface
   private $em;
   private $serializer;
   private $ownerService;
+  private  $form;
 
     public function __construct(EntityManagerInterface $em, SerializerInterface $serializer,RessourceOwnerService $ownerService)
     {
         $this->em= $em;
         $this->serializer=$serializer;
         $this->ownerService=$ownerService;
-        /**
+          /**
          * @var User $user
          */
         $user=$this->em->getRepository (User::class)->findOneBy (['id'=>22]);
@@ -122,14 +126,25 @@ class ProfileService implements ProfileServiceInterface
         $contentFormat=$this->getContentFormat ($request->headers);
         $acceptFormat=$this->getAcceptedFormat ($request->headers);
         /**
+         * @var FormInterface $form
+         */
+        $form=array_key_exists ('form',$context)?$context['form']:null;
+
+        if(empty($form)){
+            throw  new \Exception("form not found in context Array. Please provide form ");
+        }
+        /**
          * @var User $profile
          */
         $profile=$this->em-> getRepository (User::class) ->findOneBy (['id'=>$id]);
-        $data=$request->getContent ();
-        /*
+        $form->setData ($profile);
+        $data=$request->toArray ();
+        $form->submit($data,false);
+        /**
          * @var User $profile
          */
-        $profile = $this->serializer ->deserialize (trim ($data),User::class,$contentFormat,[AbstractNormalizer::OBJECT_TO_POPULATE => $profile,AbstractObjectNormalizer::DEEP_OBJECT_TO_POPULATE => true]);
+        $profile=$form->getData ();
+       // $profile = $this->serializer ->deserialize (trim ($data),User::class,$contentFormat,[AbstractNormalizer::OBJECT_TO_POPULATE => $profile,AbstractObjectNormalizer::DEEP_OBJECT_TO_POPULATE => true]);
 
         $skills= array_merge ($profile->getOwnSkills ()->toArray (),$profile->getSearchedSkills ()->toArray ());
 
@@ -137,25 +152,41 @@ class ProfileService implements ProfileServiceInterface
             /**
              * @var Skills $skill
              */
-            $lDescrition=$skill->getLevelDescription ();
-            $fDescription=$skill->getFieldDescription ();
+            if(!$skill->getField ()){
+                $lDescrition=$skill->getLevelDescription ();
+                /**
+                 * @var Level $level
+                 */
+                $level=$this->em->getRepository (Level::class)->findOneBy (["description"=>$lDescrition]);
+                $skill->setLevel ($level);
+            }
+           if(!$skill->getField ()){
+               $fDescription=$skill->getFieldDescription ();
+               /**
+                * @var Field $field
+                */
+               $field=$this->em->getRepository (Field::class)->findOneBy (["description"=>$fDescription]);
+               $skill->setField ($field);
+           }
+            $skill->setUser($profile);
+        }
 
+        $sections= array_merge ($profile->getTrainings ()->toArray (),$profile->getExperiences ()->toArray ());
+
+        foreach ($sections as $section){
             /**
-             * @var Level $level
+             * @var  Section $section
              */
-            $level=$this->em->getRepository (Level::class)->findOneBy (["description"=>$lDescrition]);
-            /**
-             * @var Field $field
-             */
-            $field=$this->em->getRepository (Field::class)->findOneBy (["description"=>$fDescription]);
-            $skill->setLevel ($level);
-            $skill->setField ($field);
+            if(!$section->getUser ()){
+                $section->setUser ($profile)  ;
+            }
+
         }
 
         $this->em->persist ($profile);
         $this->em->flush ();
         //je resérialise l'objet qui vient être créer juste pour le retourner à l'utilisateur
-        $data = $this->serializer->serialize($profile, $acceptFormat);
+        $data = $this->serializer->serialize($profile, $acceptFormat,['groups'=>self::OWNER_GROUPS]);
         return $data;
     }
 

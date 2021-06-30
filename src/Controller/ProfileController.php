@@ -6,6 +6,7 @@ namespace App\Controller;
 
 use App\Controller\Handler\FormatHandlerController;
 use App\Entity\User;
+use App\Form\UserType;
 use App\Service\ProfileServiceInterface;
 use App\Service\RessourceOwnerService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -54,10 +55,11 @@ class ProfileController extends AbstractController implements FormatHandlerContr
 
     /**
      * il faut être propriétaire ou admin  methods="GET"
-     * @Route("/profiles/{id}/put", name="put_profile")
+     * @Route("/profiles/{id}", name="update_profile",methods="POST")
      */
    public function edit(Request $request,$id){
-       $data=$this->profileService->update  ($request,$id);
+
+       $data=$this->profileService->update  ($request,$id,['form'=>$this->createForm (UserType::class)]);
        return new Response($data,Response::HTTP_OK);
    }
 
