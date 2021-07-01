@@ -55,7 +55,7 @@ class ProfileController extends AbstractController implements FormatHandlerContr
 
     /**
      * il faut être propriétaire ou admin  methods="GET"
-     * @Route("/profiles/{id}", name="update_profile",methods="POST")
+     * @Route("/profiles/{id}", name="update_profile",methods="PUT")
      */
    public function edit(Request $request,$id){
 
