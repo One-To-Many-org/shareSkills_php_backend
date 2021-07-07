@@ -15,7 +15,7 @@ use Symfony\Component\HttpKernel\Event\ResponseEvent;
 
 class RequestFormatHandler implements EventSubscriberInterface
 {
-    protected static $supportsFormat=['application/json'=>'json','application/xml'=>'xml','application/yaml'=>'yaml','application/*'=>'json'];
+    protected static $supportsFormat=['image/png'=>'png', '*/*'=>'application/json','application/json'=>'json','application/xml'=>'xml','application/yaml'=>'yaml','application/*'=>'json','multipart/form-data'=>'multipart/form-data'];
     const NO_CONTENT_TYPE_MESSAGE="You don't provide in request headers your data content type provided it in your request header with the keys \"Content-Type\" or \"Send-Type\" Like this by example"
     ."\"Content-Type\"=>\"appliction/json\"";
     const NO_SUPPORTED_SEND_TYPE="Your content-type %s is not supported";
@@ -134,6 +134,7 @@ class RequestFormatHandler implements EventSubscriberInterface
      */
     public function isSupportedFormat($format): bool
     {
+        $format=preg_replace  ('/;\sboundary=(.*)|charset=(.*)/',"",$format);
         return array_key_exists  ($format,self::$supportsFormat);
     }
 
@@ -182,20 +183,28 @@ class RequestFormatHandler implements EventSubscriberInterface
         // $acceptHeaderPourTester='text/plain;q=0.5, text/html, text/*;q=0.8, */*;q=0.3',application/xml;q=0.9,application/json;q=0.8
         //doit retourner application/xml avec $acceptHeaderPourTester
         $maxQuality=0; $first=true; $firstSupport=""; $maxQualitySupport="";
-        foreach (self::$supportsFormat as $format =>$value) {
-            $support =  $format;
-            $item = $acceptHeader -> get ( $support );
-            if ($item) {
-                if ($first) {
-                    $firstSupport = $support;
-                }
-                $quality = $item -> getQuality ();
-                if ($quality > $maxQuality) {
-                    $maxQuality = $quality;
-                    $maxQualitySupport = $support;
+        if(count ($acceptHeader->all ())>1){
+            foreach (self::$supportsFormat as $format =>$value) {
+                $support =  $format;
+                $item = $acceptHeader -> get ( $support );
+                if ($item) {
+                    if ($first) {
+                        $accept=$item->getValue();
+                        $firstSupport= array_key_exists ($accept,self::$supportsFormat)?$accept:$support;
+                    }
+                    $quality = $item -> getQuality ();
+                    if ($quality > $maxQuality) {
+                        $maxQuality = $quality;
+                        $maxQualitySupport = $support;
+                    }
                 }
             }
         }
+        if (count ($acceptHeader->all ())===1){
+            $accept= $acceptHeader->first ()->getValue ();
+            $firstSupport= array_key_exists ($accept,self::$supportsFormat)?$accept: $firstSupport;
+        }
+
         return $maxQualitySupport?$maxQualitySupport:$firstSupport;
     }
 
