@@ -4,6 +4,7 @@ namespace App\Form;
 
 use App\Entity\Experience;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
@@ -18,10 +19,10 @@ class ExperienceType extends AbstractType
             ->add('adresse')
             ->add('qualification')
             ->add('title')
-            ->add('startedDate')
-            ->add('endDate')
+            ->add('startedDate',DateTimeType::class,['widget' => 'single_text'])
+            ->add('endDate',DateTimeType::class,['widget' => 'single_text'])
             ->add('description')
-          //  ->add('createdAt')
+            ->add('createdAt')
             ->add('updatedAt')
             ->add('user')
         ;

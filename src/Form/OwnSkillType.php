@@ -16,7 +16,9 @@ class OwnSkillType extends AbstractType
            // ->add('createdAt')
             ->add('updatedAt')
             ->add('field')
+            ->add ('fieldDescription')
             ->add('level')
+            ->add ('levelDescription')
             ->add('user')
         ;
     }

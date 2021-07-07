@@ -4,6 +4,8 @@ namespace App\Form;
 
 use App\Entity\Training;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
+use Symfony\Component\Form\Extension\Core\Type\DateType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
@@ -18,10 +20,10 @@ class TrainingType extends AbstractType
             ->add('adresse')
             ->add('qualification')
             ->add('title')
-            ->add('startedDate')
-            ->add('endDate')
+            ->add('startedDate',DateType::class,['widget' => 'single_text'])
+            ->add('endDate',DateType::class,['widget' => 'single_text'])
             ->add('description')
-          //  ->add('createdAt')
+            ->add('createdAt')
             ->add('updatedAt')
             ->add('user')
         ;

@@ -15,7 +15,9 @@ class SearchedSkillType extends AbstractType
             ->add('description')
            // ->add('createdAt')
             ->add('updatedAt')
+            ->add ('fieldDescription')
             ->add('field')
+            ->add ('levelDescription')
             ->add('level')
             ->add('user')
         ;

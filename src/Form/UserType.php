@@ -7,8 +7,10 @@ use App\Entity\SearchedSkill;
 use App\Entity\User;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CollectionType;
+use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Vich\UploaderBundle\Form\Type\VichFileType;
 
 class UserType extends AbstractType
 {
@@ -22,11 +24,14 @@ class UserType extends AbstractType
             ->add('lastName')
             ->add('email')
             ->add('phone')->setRequired (false)
-            ->add('birthDate')
+            ->add('birthDate',DateTimeType::class,['widget' => 'single_text'])
             ->add('roles')
             ->add('city')
             ->add('adresse')
             ->add('gender')
+            ->add ('picture',VichFileType::class)
+            ->add ('filename')
+            ->add ('password')
             ->add('picturesPath')
             ->add('profileDescription')
             ->add ('trainings',CollectionType::class,[
