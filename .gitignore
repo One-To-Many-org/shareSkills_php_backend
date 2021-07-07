@@ -10,6 +10,8 @@
 /vendor/
 /config/jwt
 .idea/
+public/profiles
+symfony.lock
 ###< symfony/framework-bundle ###
 
 ###> lexik/jwt-authentication-bundle ###
