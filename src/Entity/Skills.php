@@ -55,12 +55,12 @@ abstract class Skills
     private $description;
 
     /**
-     * @ORM\Column(type="datetime",options={"default": "CURRENT_TIMESTAMP"})
+     * @ORM\Column(type="datetime",nullable=true,options={"default": "CURRENT_TIMESTAMP"})
      */
     private $createdAt;
 
     /**
-     * @ORM\Column(type="datetime",options={"default": "CURRENT_TIMESTAMP"})
+     * @ORM\Column(type="datetime",nullable=true,options={"default": "CURRENT_TIMESTAMP"})
      * @Groups({"full_user"})
      */
     private $updatedAt;

@@ -6,6 +6,7 @@ use App\Repository\SectionRepository;
 use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
+use Laminas\Form\Element\DateTime;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Serializer\Annotation\Groups;
 /**
@@ -86,12 +87,13 @@ use Symfony\Component\Serializer\Annotation\Groups;
     private $description;
 
      /**
-      * @ORM\Column(type="datetime_immutable",options={"default": "CURRENT_TIMESTAMP"})
+      * @ORM\Column(type="datetime_immutable",nullable=true,options={"default": "CURRENT_TIMESTAMP"})
+      * @Groups({"full_user"})
       */
      private $createdAt;
 
      /**
-      * @ORM\Column(type="datetime",options={"default": "CURRENT_TIMESTAMP"})
+      * @ORM\Column(type="datetime",nullable=true,options={"default": "CURRENT_TIMESTAMP"})
       * @Groups({"full_user"})
       */
      private $updatedAt;

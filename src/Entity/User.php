@@ -8,6 +8,8 @@ use DateTimeInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\HttpFoundation\File\File;
+use Vich\UploaderBundle\Mapping\Annotation as Vich;
 use Doctrine\ORM\Mapping\HasLifecycleCallbacks as HasLifecycleCallbacks;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Constraints\Email;
@@ -18,8 +20,9 @@ use Doctrine\ORM\Mapping as ORM;
 
 /**
  * @ORM\Entity(repositoryClass=UserRepository::class)
- * @UniqueEntity("apiToken")
+ * @UniqueEntity(fields={"email"}, message="Cette email est déja utilisé")
  * @ORM\HasLifecycleCallbacks
+ * @Vich\Uploadable
  * @method string getUserIdentifier()
  */
 class User implements UserInterface
@@ -62,7 +65,6 @@ class User implements UserInterface
 
     /**
      * @ORM\Column(name="email", type="string", length=100, unique=true)
-     * @Assert\Email
      * @Groups({"full_user", "short_user"})
      */
 
@@ -105,6 +107,19 @@ class User implements UserInterface
     private $gender;
 
     /**
+     * @Vich\UploadableField(mapping="pictures", fileNameProperty="filename")
+     * @var File
+     */
+    private $picture;
+
+    /**
+     * @ORM\Column (type="string",length=100,nullable=true,options={"defaults":"60ddc260d7796765955212.jpg"})
+     * * @Groups({"full_user", "short_user"})
+     * @var string
+     */
+    private $filename;
+
+    /**
      * @ORM\Column(type="string", length=255, nullable=true)
      * @Groups({"full_user", "short_user"})
      */
@@ -141,12 +156,12 @@ class User implements UserInterface
     private $searchedSkills;
 
     /**
-     * @ORM\Column(type="datetime_immutable",options={"default": "CURRENT_TIMESTAMP"})
+     * @ORM\Column(type="datetime_immutable",nullable=true,options={"default": "CURRENT_TIMESTAMP"})
      */
     private $createdAt;
 
     /**
-     * @ORM\Column(type="datetime",options={"default": "CURRENT_TIMESTAMP"})
+     * @ORM\Column(type="datetime",nullable=true,options={"default": "CURRENT_TIMESTAMP"})
      * @Groups({"full_user","short_user"})
      */
     private $updatedAt;
@@ -157,6 +172,7 @@ class User implements UserInterface
         $this->experiences = new ArrayCollection();
         $this->ownSkills = new ArrayCollection();
         $this->searchedSkills = new ArrayCollection();
+        $this->createdAt=new \DateTimeImmutable();
         $this->roles[]='ROLE_USER';
     }
 
@@ -283,6 +299,46 @@ class User implements UserInterface
         $this->gender = $gender;
 
         return $this;
+    }
+
+    /**
+     * @return File
+     */
+    public function getPicture()
+    {
+        return $this -> picture;
+    }
+
+    /**
+     * @param File|null $picture
+     * @return $this
+     */
+    public function setPicture(File $picture = null)
+    {
+        $this->picture = $picture;
+        if ($picture) {
+            $this->updatedAt = new \DateTime('now');
+        }
+        return $this;
+    }
+
+
+    /**
+     * @param string $filename
+     */
+    public function setFilename(?string $filename)
+    {
+        $this -> filename = $filename;
+        $this->setPicturesPath ('profiles/pictures/'.$this->filename);
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getFilename(): ?string
+    {
+        return $this -> filename;
     }
 
     public function getPicturesPath(): ?string
