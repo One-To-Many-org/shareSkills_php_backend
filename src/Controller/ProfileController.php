@@ -51,7 +51,7 @@ class ProfileController extends AbstractController implements FormatHandlerContr
      */
    public function new(Request $request){
        $data=$this->profileService->create ($request);
-       return new Response($data,Response::HTTP_OK);
+       return new Response($data,Response::HTTP_CREATED);
    }
 
     /**
@@ -59,16 +59,18 @@ class ProfileController extends AbstractController implements FormatHandlerContr
      * @Route("/profiles/{id}", name="update_profile",methods="PUT")
      */
    public function edit(Request $request,$id,PutRequestParser $parser){
-       $parser->handleIfIsMultipart ($request);
+       $parser->parseTo_POST_IfMultipart ($request);
        $data=$this->profileService->update  ($request,$id);
        return new Response($data,Response::HTTP_OK);
    }
 
     /**
      * propriétaires ou admin
+     * @Route("/profiles/{id}", name="delete_profile",methods="DELETE")
      */
-   public function delete(){
-
+   public function delete($id){
+       $this->profileService->delete ($id);
+       return new Response("",Response::HTTP_OK);
    }
 
     /**

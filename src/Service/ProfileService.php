@@ -9,30 +9,18 @@ use App\Entity\Level;
 use App\Entity\OwnSkill;
 use App\Entity\SearchedSkill;
 use App\Entity\Section;
-use App\Entity\Skills;
 use App\Entity\User;
 use App\Exceptions\CustomException;
-use App\Form\OwnSkillType;
 use App\Form\UserType;
+use App\Serializer\ProfileSerializer;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Form\FormFactoryInterface;
-use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
-use Symfony\Component\HttpFoundation\HeaderBag;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Serializer\Encoder\JsonEncoder;
-use Symfony\Component\Serializer\Encoder\XmlEncoder;
-use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
-use Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer;
-use Symfony\Component\Serializer\Normalizer\NormalizableInterface;
-use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
-use Symfony\Component\Serializer\SerializerInterface;
+
 
 class ProfileService implements ProfileServiceInterface
 {
-
-    const ACCEPT='Accept';
-    const CONTENT_TYPE='Content-Type';
     const OWNER_GROUPS='full_user';
     const GUEST_GROUPS="short_user";
     const DATA_FIELD='data';
@@ -41,126 +29,82 @@ class ProfileService implements ProfileServiceInterface
     private $ownerService;
     private $typeMapper;
     private $formFactory;
-    private $normalizer;
+    private $decoder;
 
     /**
      * @var User $user
      */
     private static $user;
 
-    public function __construct(EntityManagerInterface $em, SerializerInterface $serializer,RessourceOwnerService $ownerService,
-                                MimeTypeMapperService $typeMapper,FormFactoryInterface $formFactory, NormalizerInterface $normalizer)
+    public function __construct(EntityManagerInterface $em, ProfileSerializer $serializer, RessourceOwnerService $ownerService,
+                                MediaTypesService $typeMapper, FormFactoryInterface $formFactory, DataDecoder $decoder)
     {
         $this->em= $em;
         $this->serializer=$serializer;
         $this->ownerService=$ownerService;
         $this->typeMapper=$typeMapper;
         $this->formFactory=$formFactory;
-        $this->normalizer=$normalizer;
-          /**
-         * @var User $user
-         */
-        $user=$this->em->getRepository (User::class)->findOneBy (['id'=>22]);
+        $this->decoder=$decoder;
     }
 
     /**
-     * @return EntityManagerInterface
+     * @throws \Exception
      */
-    public function getEm(): EntityManagerInterface
+    public function create(Request $request)
     {
-        return $this -> em;
-    }
-
-
-    /**
-     * @param EntityManagerInterface $em
-     */
-    public function setEm(EntityManagerInterface $em): ProfileService
-    {
-        $this -> em = $em;
-        return $this;
-    }
-
-
-    /**
-     * @return SerializerInterface
-     */
-    public function getSerializer(): SerializerInterface
-    {
-        return $this -> serializer;
-    }
-
-    /**
-     * @param SerializerInterface $serializer
-     */
-    public function setSerializer(SerializerInterface $serializer): void
-    {
-        $this -> serializer = $serializer;
-    }
-
-    /**
-     * @return MimeTypeMapperService
-     */
-    public function getTypeMapper(): MimeTypeMapperService
-    {
-        return $this -> typeMapper;
-    }
-
-    public function create(Request $request){
-        $contentFormat=$this->getContentFormat ($request);
-        $acceptFormat=$this->getAcceptedFormat ($request);
-
-        if($this->isMultipartFormData ($request)){
-             $profile=$this->newWithFormSubmit ($this->toArrayContent ($request));
-             $this->handlePicture ($request,$profile);
-        }else{
-           $profile= $this->newWithSerializer ($contentFormat,$request->getContent ());
-        }
-        $profile=$this->handleRelations ($profile);
+        $isMultipartRequest=$this->typeMapper->isMultipartFormDataRequest  ($request);
+        $acceptFormat=$this->typeMapper->resolveAcceptWith  ($request);
+        $dataField=$isMultipartRequest?self::DATA_FIELD:"";
+        $data=$isMultipartRequest?$request->get (self::DATA_FIELD):$request->getContent ();
+        $contentFormat=$this->typeMapper->getContentFormat ($request,$dataField);
+        $profile=$this->newWithFormSubmit ($this->decoder->decode ($data,$contentFormat));
+        $this->handlePicture ($request,$profile);
+        $this->handleRelations ($profile);
         $this->em->persist ($profile);
         $this->em->flush();
         $data=$this->serializer->serialize ($profile,$acceptFormat,['groups'=>self::OWNER_GROUPS]);
         return $data;
     }
 
+    /**
+     * @throws CustomException
+     */
     public function update(Request $request, $id, $context = [])
     {
-
-        $acceptFormat=$this->getAcceptedFormat ($request);
+        $this->isAllowed ($id,'edit');
+        $isMultipartRequest=$this->typeMapper->isMultipartFormDataRequest  ($request);
+        $acceptFormat=$this->typeMapper->resolveAcceptWith  ($request);
+        $dataField=$isMultipartRequest?self::DATA_FIELD:"";
+        $data=$isMultipartRequest?$request->get (self::DATA_FIELD):$request->getContent ();
+        $contentFormat=$this->typeMapper->getContentFormat ($request,$dataField);
         /**
          * @var User $profile
          */
         $profile=$this->loadUser ($id);
-        /**
-         * @var FormInterface $form
-         */
         $form=$this->formFactory->create (UserType::class,$profile);
-        $arrayOfContent= $this->toArrayContent ($request);
+        $arrayOfContent= $this->decoder->decode ($data,$contentFormat);
         $form->submit($arrayOfContent,false);
-        /**
-         * @var User $profile
-         */
-        $profile=$form->getData ();
+
         $this->handlePicture ($request,$profile);
         $this->handleRelations ($profile);
         $this->em->persist ($profile);
         $this->em->flush ();
-        //je resérialise l'objet qui vient d'être créer juste pour le retourner à l'utilisateur
-      //  $data = $this->serializer->serialize($profile, $acceptFormat,['groups'=>self::OWNER_GROUPS]);
-        $data=$this->serializeOne ($profile,$acceptFormat,['groups'=>self::OWNER_GROUPS]);
-        return $data;
+        return $this->serializer->serializeOne ($profile,$acceptFormat,['groups'=>self::OWNER_GROUPS]);
     }
 
+    /**
+     * @throws CustomException
+     */
     public function read(Request $request, $id, $context = [])
     {
-        $acceptFormat=$this->getAcceptedFormat ($request);
+        $acceptFormat=$this->typeMapper->resolveAcceptWith($request);
         /**
          * @var User $user
          */
         $user= $this->loadUser ($id);
         if ($user && $user instanceof User){
             $groups=$this->ownerService->isOwner ($user)?self::OWNER_GROUPS:self::GUEST_GROUPS;
-            $data=$this->serializeOne ($user,$acceptFormat,['groups'=>$groups]);
+            $data=$this->serializer->serializeOne ($user,$acceptFormat,['groups'=>$groups]);
             return $data;
         }
 
@@ -174,31 +118,20 @@ class ProfileService implements ProfileServiceInterface
      */
     public function all(Request $request, $context = [])
     {
-        $acceptFormat=$this->getAcceptedFormat ($request);
+        $acceptFormat=$this->typeMapper->resolveAcceptWith  ($request);
         $users=$this->em->getRepository (User::class)->findAll ();
-        return $this->serializeList ($users,$acceptFormat,['groups'=>'short_user']);
+        return $this->serializer->serializeList ($users,$acceptFormat,['groups'=>'short_user']);
 
     }
 
     public function delete($id, $context = [])
     {
-        // TODO: Implement delete() method.
+        $this->isAllowed ($id,'delete');
+        $this->em->remove ($this->loadUser ($id));
+        $this->em->flush ();
+
     }
 
-    /**
-     * cas contentype est de type mime : json, xml,...
-     * @param $contentFormat
-     * @param string | array $data
-     * @return User
-     */
-    protected function newWithSerializer($contentFormat,$data){
-        /**
-         * @var User $profile
-         */
-        $profile=$this->serializer->deserialize ($data,User::class,$contentFormat);
-        $profile=$this->handleRelations ($profile);
-        return $profile;
-    }
 
     /**
      * cas content-type est multipart avec un champ data et picture
@@ -216,24 +149,6 @@ class ProfileService implements ProfileServiceInterface
         $profile=$form->getData ();
         $profile=$this->handleRelations ($profile);
        return $profile;
-    }
-
-    /**
-     * cas données du formulaire envoyé par un navigateur
-     * @param Request $request
-     * @return User
-     */
-    protected function newWithFormHandle(Request $request){
-        $profile=new User();
-        $form=$this->formFactory->create (UserType::class,$profile);
-        $form->handleRequest ($request);
-        /**
-         * @var User $profile
-         */
-
-        $profile=$form->getData ();
-        $profile=$this->handleRelations ($profile);
-        return $profile;
     }
 
     public function handlePicture(Request $request,User $profile){
@@ -307,86 +222,6 @@ class ProfileService implements ProfileServiceInterface
         $this->handleSections ($profile);
         return $profile;
     }
-
-    /**
-     * @param $users
-     * @param $type
-     * @param array $context
-     * @return string
-     */
-   private function serializeList($users, $type, array $context=[]){
-
-           switch ($type) {
-
-               case 'xml':
-                   $defaultContext=[xmlEncoder::ROOT_NODE_NAME=>'profile'];
-                   $profiles=[];
-                   foreach ($users as $profile){
-                       /**
-                        * @ met un attribut dans le champs
-                        * # insère sans surcouche de balise
-                        */
-                       $value=["@id"=>$profile->getId (),"#"=>$profile];
-                       array_push ($profiles,$value);
-                   }
-                   $result=$this->serializer->serialize (['numfound'=>count ($profiles),'profile-list'=>['profile'=>$profiles]],'xml',array_merge($defaultContext,$context));
-                   break;
-               case 'json':
-                   $result=$this->serializer->serialize (['numfound'=>count ($users),'profile-list'=>$users],'json',$context);
-                   break;
-               default:
-                   throw new CustomException("Unrecognized Format ".$type."for profile list Serialisation");
-           }
-
-           return $result;
-   }
-
-    private function serializeOne(User $user, $type, array $context=[]){
-        switch ($type) {
-            case 'xml':
-                $defaultContext=[xmlEncoder::ROOT_NODE_NAME=>'profile'];
-                $result=$this->serializer->serialize ($user,'xml',array_merge($defaultContext,$context));
-                break;
-            case 'json':
-                $result=$this->serializer->serialize ($user,'json',$context);
-                break;
-            default:
-                throw new CustomException("Unrecognized Format ".$type."for profile Serialisation");
-        }
-        return $result;
-    }
-
-   protected function getContentFormat(Request $request){
-
-       if ($this->isMultipartFormData ($request)){
-           if($this->isJson ($request->get (self::DATA_FIELD))){
-               return 'json';
-           }
-           if($this->isXML  ($request->get (self::DATA_FIELD))){
-               return 'xml';
-           }
-           throw new CustomException("Unable to decode your data");
-       }
-       $contentype=$request->headers->get (self::CONTENT_TYPE);
-       $format= $this->typeMapper->guessExtension ($contentype);
-
-       return $format;
-
-   }
-
-    /**
-     * @param Request $request
-     * @return bool
-     */
-   protected  function isMultipartFormData(Request $request){
-       $contentype=$request->headers->get (self::CONTENT_TYPE);
-      return $this->typeMapper->isMultipartFormData ($contentype);
-   }
-
-    protected function getAcceptedFormat(Request $request){
-        return $this->typeMapper->guessExtension ($request->headers->get (self::ACCEPT));
-    }
-
     /**
      * @param $userId
      * @return string
@@ -421,63 +256,23 @@ class ProfileService implements ProfileServiceInterface
        return self::$user;
      }
 
-     protected function isXML($xmlstr){
-         /**
-          *  if (trim($xmlContent) == '') {
-         return false;
-         }
-
-         libxml_use_internal_errors(true);
-
-         $doc = new DOMDocument($version, $encoding);
-         $doc->loadXML($xmlContent);
-
-         $errors = libxml_get_errors();
-         libxml_clear_errors();
-
-         return empty($errors);
-          */
-         $doc = simplexml_load_string($xmlstr);
-         return $doc===false?false:true ;
-     }
-
-    protected function isJson($string) {
-       $json= json_decode($string);
-       if(!$json){
-           $jsonEncoder= new JsonEncoder();
-           $json=$jsonEncoder->decode ($string,'json');
-       }
-        return $json?json_last_error() === JSON_ERROR_NONE:true;
-    }
-
     /**
-     * @param Request $request
-     * @return array
+     * @param $userId
+     * @param string $action
+     * @return bool
      * @throws CustomException
      */
-    protected function toArrayContent(Request $request):array
-    {
-        $contentType=$this->getContentFormat ($request);
-        $data=$request->get (self::DATA_FIELD);
+     public function isAllowed($userId,$action='edit or delete'){
+         $user= $this->loadUser ($userId);
 
-        if('xml'===$contentType){
-            try {
-                $xmlEncoder=new XmlEncoder();
-                $xmlStr=!empty($data)?$data:$request->getContent ();
-                $arrayContent= $xmlEncoder->decode ($xmlStr,'xml');
-            }catch (\Exception $exception){
-                throw new CustomException($exception->getMessage ());
-            }
-            return $arrayContent;
-        }
+         if( $this->ownerService->isOwner ($user)){
+             return true ;
+         }else{
+             throw new \Exception("You are not allowed to $action this profil");
+         }
 
-        if('json'==$contentType){
-            return !empty($data)? json_decode ($data,true):$request->toArray ();
-        }
+     }
 
-        throw new CustomException("unable to decode your content type");
-
-    }
 }
 /**
  * AbstractNormalizer::OBJECT_TO_POPULATE n'est utilisé que pour l'objet de niveau supérieur.

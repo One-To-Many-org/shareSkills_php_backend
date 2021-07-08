@@ -10,7 +10,7 @@ use App\Entity\User;
 use App\Form\UserType;
 use App\Repository\SectionRepository;
 use App\Repository\UserRepository;
-use App\Service\MimeTypeMapperService;
+use App\Service\MediaTypesService;
 use App\Service\ProfileService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -129,7 +129,7 @@ class TestController extends AbstractController
     /**
      *  @Route("/test/{id}/picture", name="test_picture_profile_send",methods="POST")
      */
-    public function send(Request $request, $id,MimeTypeMapperService $mapper,EntityManagerInterface $em){
+    public function send(Request $request, $id, MediaTypesService $mapper, EntityManagerInterface $em){
 
         /**
          * @var User $user

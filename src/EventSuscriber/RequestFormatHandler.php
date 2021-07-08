@@ -5,6 +5,7 @@ namespace App\EventSuscriber;
 
 
 use App\Controller\Handler\FormatHandlerController;
+use App\Service\MediaTypesService;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\AcceptHeader;
 use Symfony\Component\HttpFoundation\Request;
@@ -15,7 +16,8 @@ use Symfony\Component\HttpKernel\Event\ResponseEvent;
 
 class RequestFormatHandler implements EventSubscriberInterface
 {
-    protected static $supportsFormat=['image/png'=>'png', '*/*'=>'application/json','application/json'=>'json','application/xml'=>'xml','application/yaml'=>'yaml','application/*'=>'json','multipart/form-data'=>'multipart/form-data'];
+    protected static $supportsFormat=['image/png'=>'png', '*/*'=>'json','application/json'=>'json','application/xml'=>'xml','application/yaml'=>'yaml','application/*'=>'json','multipart/form-data'=>''];
+    protected static $manyAcceptResolver=['*/*'=>'application/json','application/*'=>'application/json'];
     const NO_CONTENT_TYPE_MESSAGE="You don't provide in request headers your data content type provided it in your request header with the keys \"Content-Type\" or \"Send-Type\" Like this by example"
     ."\"Content-Type\"=>\"appliction/json\"";
     const NO_SUPPORTED_SEND_TYPE="Your content-type %s is not supported";
@@ -23,7 +25,14 @@ class RequestFormatHandler implements EventSubscriberInterface
     const ACCEPT='Accept';
     const CONTENT_TYPE='Content-Type';
     public static $isFormatHandlerController;
+    /**
+     * @var MediaTypesService
+     */
+    protected $mediaTypeService;
 
+    public function __construct(MediaTypesService $mediaTypesService){
+        $this->mediaTypeService=$mediaTypesService;
+    }
 
     public static function getSubscribedEvents(): array
     {
@@ -90,7 +99,7 @@ class RequestFormatHandler implements EventSubscriberInterface
              */
             if (empty($errorMessage) && $this->willReceiveData ($request)){
                     $acceptHeader = AcceptHeader::fromString($request->headers->get('Accept'));
-                    $accept=$this->resolveAccept ($acceptHeader);
+                    $accept=$this->resolveAccept ($request);
                     if(empty($accept)){
                         if(count ($acceptHeader->all ())>0){
                             $errorMessage=sprintf (self::NO_SUPPORTED_RETURN_TYPE,$this->getSupportFormatAsString ());
@@ -179,33 +188,12 @@ class RequestFormatHandler implements EventSubscriberInterface
      * @param AcceptHeader $acceptHeader
      * @return string
      */
-    public function resolveAccept(AcceptHeader $acceptHeader){
+    public function resolveAccept(Request $request){
         // $acceptHeaderPourTester='text/plain;q=0.5, text/html, text/*;q=0.8, */*;q=0.3',application/xml;q=0.9,application/json;q=0.8
         //doit retourner application/xml avec $acceptHeaderPourTester
-        $maxQuality=0; $first=true; $firstSupport=""; $maxQualitySupport="";
-        if(count ($acceptHeader->all ())>1){
-            foreach (self::$supportsFormat as $format =>$value) {
-                $support =  $format;
-                $item = $acceptHeader -> get ( $support );
-                if ($item) {
-                    if ($first) {
-                        $accept=$item->getValue();
-                        $firstSupport= array_key_exists ($accept,self::$supportsFormat)?$accept:$support;
-                    }
-                    $quality = $item -> getQuality ();
-                    if ($quality > $maxQuality) {
-                        $maxQuality = $quality;
-                        $maxQualitySupport = $support;
-                    }
-                }
-            }
-        }
-        if (count ($acceptHeader->all ())===1){
-            $accept= $acceptHeader->first ()->getValue ();
-            $firstSupport= array_key_exists ($accept,self::$supportsFormat)?$accept: $firstSupport;
-        }
+       $accept=  $this->mediaTypeService->resolveAcceptWith ($request,array_keys  (self::$supportsFormat),true,false);
+       return  array_key_exists ($accept,self::$manyAcceptResolver)?self::$manyAcceptResolver[$accept]:$accept;
 
-        return $maxQualitySupport?$maxQualitySupport:$firstSupport;
     }
 
 

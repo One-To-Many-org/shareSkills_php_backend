@@ -4,11 +4,21 @@
 namespace App\Service;
 
 
+use App\Exceptions\CustomException;
+use Exception;
+use Symfony\Component\HttpFoundation\AcceptHeader;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Mime\MimeTypes;
 use Symfony\Component\Mime\MimeTypesInterface;
+use Symfony\Component\Serializer\Encoder\JsonEncoder;
+use Symfony\Component\Serializer\Exception\NotEncodableValueException;
+use function is_resource;
+use function is_string;
 
-class MimeTypeMapperService
+final class MediaTypesService
 {
+    const CONTENT_TYPE = 'Content-Type';
+    const ACCEPT = 'accept';
     public $mimeType;
 
     public function __construct(MimeTypesInterface $mimeType=null)
@@ -30,31 +40,229 @@ class MimeTypeMapperService
      * @param string $mimeType
      * @return string|null
      */
-    public function guessExtension(string $mimeType)
+    public function guessExtension(string $mimeType): ?string
     {
         $exts=$this->mimeType->getExtensions ($mimeType);
         return is_array ($exts) && count ($exts)>0?current ($exts) : null;
     }
 
-    public  function isMultipartFormData(string $contentype){
-        $contentype=preg_replace  ('/;\sboundary=(.*)|charset=(.*)/',"",$contentype);
-        return trim ($contentype)==="multipart/form-data";
-
-    }
-
-
-
+    /**
+     * @param string $ext
+     * @return array
+     */
     public function getMimeTypes(string $ext): array
     {
         return $this->mimeType->getMimeTypes ($ext)  ;
     }
 
 
-
+    /**
+     * @param string $ext
+     * @return string|null
+     */
     public function guesstMimeType(string $ext)
     {
         $mimes=$this->mimeType->getMimeTypes ($ext);
-        return $mimes?current ($mimes):null;
+        $mime=is_array ($mimes) && count($mimes)>0?current ($mimes):$mimes;
+        return is_string ($mime) && !empty($mimes)?$mime:null;
+    }
+
+    /**
+     *
+     * @param Request $request
+     * @param string $dataField
+     * $dataField is ignored when $snifData is false
+     * @param bool $snifData
+     * @return string|null
+     */
+    public function getContentFormat(Request $request,string $dataField="",bool $snifData=true): ?string
+    {
+        $contentype=$request->headers->get (self::CONTENT_TYPE)?$request->headers->get (self::CONTENT_TYPE):"";
+        $format= $this->guessExtension ($contentype);
+        if($snifData){
+            $data=empty($dataField)?$request->getContent ():$request->get ($dataField);
+            $format=$this->sniffData ($data);
+        }
+        return $format;
+    }
+
+    /**
+     * return acceptFormats sort by prioritary of quality
+     * @param Request $request
+     * @param bool $extension
+     * This array is useless when $extension is false. it help to mapp a accept type like :
+     * [text/*,"*" ,application/*...] which extension can't be guest
+     * if you provide $extensionMapper will try first to map mime type
+     * to extension with your mapper first. this array key must be the mimetype
+     * and the value the extension.
+     * @param array $extensionMapper
+     * @return array
+     */
+    public function getAcceptFormats(Request $request,$extension=true,array $extensionMapper=[])
+    {
+        $accepts= [];
+        $acceptHeader = AcceptHeader::fromString($request->headers->get(self::ACCEPT));
+        $acceptItems=$acceptHeader->all ();
+        if(count ($acceptItems)>0){
+            foreach ($acceptItems as $item){
+                //less efficient with $extension test repetition but easy to read
+                if($extension){
+                    $mimetype =trim($item->getValue ());
+                    $ext=array_key_exists ($mimetype,$extensionMapper)?$extensionMapper[$mimetype]:$this->guessExtension ($mimetype) ;
+                       if(!is_null ($ext)){
+                           array_push ($accepts,$ext);
+                       }
+                }else{
+                    $accepts[]=$item->getValue ();
+                }
+            }
+        }
+        return $accepts;
+    }
+
+    /**
+     *
+     * @param Request $request
+     * this array must me mimetypeArray that you support if $extension is false
+     * or mimetypeExtension if extension is true
+     * @param array $supports
+     * we will throw exception on fail of resolve the accept
+     * @param bool $exceptionOnfail
+     * if you want mimetype ignore put $extension to false $extensionMapper
+     * will be ignored.
+     * @param bool $extension
+     * provide it to help to map to extension a mimetype like [text/*,"*" ,application/*...]
+     * @param array $extensionMapper
+     * @return string|null
+     * @throws Exception
+     */
+    public function resolveAcceptWith(Request $request,array $supports=[],$exceptionOnfail=true,$extension=true,array $extensionMapper=[]){
+        $sortedAccepts=$this->getAcceptFormats ($request,$extension,$extensionMapper);
+        $hasAccepts=count ($sortedAccepts)>0;
+
+        //no support provide and the request has Accept
+        if(count ($supports)<1 && $hasAccepts ){
+            return  current ( $sortedAccepts );
+        }
+
+        foreach ( $sortedAccepts as $accept){
+          if(in_array ($accept,$supports)){
+                  return $accept;
+          }
+        }
+
+        if($exceptionOnfail){
+            $message=$hasAccepts?"Any Request Accept type is not found in supports types":"Request don't content accept";
+            throw new Exception($message);
+        }
+        return null;
+    }
+
+    /**
+     * @param string $contentype
+     * @return bool
+     */
+    public  function isMultipartFormData(string $contentype): bool
+    {
+        $contentype=preg_replace  ('/;\sboundary=(.*)|charset=(.*)/',"",$contentype);
+        return trim ($contentype)==="multipart/form-data";
+
+    }
+
+    /**
+     * @param Request $request
+     * @return bool
+     */
+    public  function isMultipartFormDataRequest(Request $request): bool
+    {
+        $contentype=$request->headers->get (self::CONTENT_TYPE);
+        return $this->isMultipartFormData ($contentype);
+    }
+
+    /**
+     * sniff data and return the media type extension or empty if on failure to decode
+     * @param string $data
+     * @return string
+     */
+    public function sniffData($data,$extension=true): ?string
+    {
+        //if it's string we check if it's json or xml in prioritary note to return simple txt
+        if(is_string ($data)){
+            if($this->isJson ($data)){
+                return 'json';
+            }
+            if($this->isXML ($data)){
+                return 'xml';
+            }
+        }
+        try {
+            $type=mime_content_type($this->getAsRessource ($data));
+        }catch (Exception $exception){
+            return "";
+        }
+        return is_string ($type)?($extension?$this->guessExtension ($type):$type):null;
+    }
+
+    /**
+     * @param  $content
+     * @return false|resource
+     * @throws Exception
+     */
+    public function getAsRessource($content){
+
+        if (is_resource($content)) {
+            rewind($content);
+            return $content;
+        }
+
+        if (is_string($content)) {
+            $resource = fopen('php://temp', 'r+');
+            fwrite($resource, $content);
+            rewind($resource);
+            return $resource;
+        }
+        throw new Exception("Content can not be return as a ressource");
+    }
+
+    public function isXML(string $xmlstr): bool
+    {
+        /**
+         *  if (trim($xmlContent) == '') {
+        return false;
+        }
+
+        libxml_use_internal_errors(true);
+
+        $doc = new DOMDocument($version, $encoding);
+        $doc->loadXML($xmlContent);
+
+        $errors = libxml_get_errors();
+        libxml_clear_errors();
+
+        return empty($errors);
+         */
+        try {
+            $doc = simplexml_load_string($xmlstr);
+        }catch (Exception $e){
+            return false;
+        }
+
+        return !($doc === false);
+    }
+
+    public function isJson(string $jsonString): bool
+    {
+        $json= json_decode($jsonString);
+        if(!$json){
+            try {
+                $jsonEncoder= new JsonEncoder();
+                $json=$jsonEncoder->decode ($jsonString,'json');
+            }catch (NotEncodableValueException $e){
+                return false;
+            }
+
+        }
+        return !$json || json_last_error () === JSON_ERROR_NONE;
     }
 
 
