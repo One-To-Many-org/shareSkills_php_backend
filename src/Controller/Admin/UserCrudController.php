@@ -5,8 +5,11 @@ namespace App\Controller\Admin;
 use App\Entity\City;
 use App\Entity\Country;
 use App\Entity\Skills;
+use App\Entity\Training;
 use App\Entity\User;
+use App\Form\TrainingType;
 use App\Repository\CountryRepository;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ArrayField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
@@ -53,6 +56,7 @@ class UserCrudController extends AbstractCrudController
             ChoiceField::new('Gender')->setChoices (['Mr'=>'Mr','Mme'=>'Mme','other'=>'other'])->setRequired (true),
             TextField::new('PicturesPath')->hideOnIndex ()->hideOnForm (),
             TextareaField::new('ProfileDescription'),
+            CollectionField::new ('trainings')->setEntryType (TrainingType::class),
             DateTimeField::new('createdAt')->hideOnForm ()->hideOnIndex (),
             DateTimeField::new('updatedAt')->hideOnForm ()->hideOnIndex (),
         ];
@@ -72,6 +76,13 @@ class UserCrudController extends AbstractCrudController
             $result[$name]=$name;
         }
         return $result ;
+    }
+
+    public function configureCrud(Crud $crud): Crud
+    {
+        return $crud
+            ->setPaginatorPageSize (6)
+            ;
     }
 
 }

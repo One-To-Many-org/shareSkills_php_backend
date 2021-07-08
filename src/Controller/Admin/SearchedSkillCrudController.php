@@ -3,6 +3,7 @@
 namespace App\Controller\Admin;
 
 use App\Entity\SearchedSkill;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
@@ -28,5 +29,11 @@ class SearchedSkillCrudController extends AbstractCrudController
             DateTimeField::new('createdAt')->onlyWhenCreating (),
             DateTimeField::new('updatedAt'),
         ];
+    }
+    public function configureCrud(Crud $crud): Crud
+    {
+        return $crud
+            ->setPaginatorPageSize (6)
+            ;
     }
 }
