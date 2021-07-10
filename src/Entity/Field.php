@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use App\Repository\FieldRepository;
+use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
@@ -27,23 +28,26 @@ class Field
     private $description;
 
     /**
-     * @ORM\Column(type="datetime",options={"default": "CURRENT_TIMESTAMP"})
+     * @ORM\Column(type="datetime", nullable=true,options={"default": "CURRENT_TIMESTAMP"})
      */
     private $createdAt;
 
     /**
-     * @ORM\Column(type="datetime",options={"default": "CURRENT_TIMESTAMP"})
+     * @ORM\Column(type="datetime",nullable=true,options={"default": "CURRENT_TIMESTAMP"})
      */
     private $updatedAt;
 
     /**
-     * @ORM\OneToMany(targetEntity=Skills::class, mappedBy="Field")
+     * @ORM\ManyToMany(targetEntity=Skills::class,mappedBy="Fields")
      */
     private $skills;
+
 
     public function __construct()
     {
         $this->skills = new ArrayCollection();
+        $this->createdAt=new DateTimeImmutable();
+        $this->updatedAt=new \DateTime();
     }
 
     public function getId(): ?int
@@ -58,8 +62,7 @@ class Field
 
     public function setDescription(string $description): self
     {
-        $this->description = $description;
-
+        $this->description = ucfirst ($description);
         return $this;
     }
 
@@ -99,7 +102,7 @@ class Field
     {
         if (!$this->skills->contains($skill)) {
             $this->skills[] = $skill;
-            $skill->setField($this);
+            $skill->addField($this);
         }
 
         return $this;
@@ -108,10 +111,7 @@ class Field
     public function removeSkill(Skills $skill): self
     {
         if ($this->skills->removeElement($skill)) {
-            // set the owning side to null (unless already changed)
-            if ($skill->getField() === $this) {
-                $skill->setField(null);
-            }
+            $skill->removeField($this);
         }
 
         return $this;

@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use App\Repository\LevelRepository;
+use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Symfony\Component\Serializer\Annotation\Groups;
@@ -27,12 +28,12 @@ class Level
     private $description;
 
     /**
-     * @ORM\Column(type="datetime",options={"default": "CURRENT_TIMESTAMP"})
+     * @ORM\Column(type="datetime",nullable=true,options={"default": "CURRENT_TIMESTAMP"})
      */
     private $createdAt;
 
     /**
-     * @ORM\Column(type="datetime",options={"default": "CURRENT_TIMESTAMP"})
+     * @ORM\Column(type="datetime",nullable=true,options={"default": "CURRENT_TIMESTAMP"})
      */
     private $updatedAt;
 
@@ -44,6 +45,8 @@ class Level
     public function __construct()
     {
         $this->skills = new ArrayCollection();
+        $this->createdAt=new DateTimeImmutable();
+        $this->updatedAt=new \DateTime();
     }
 
     public function getId(): ?int

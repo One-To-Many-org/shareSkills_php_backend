@@ -4,6 +4,8 @@ namespace App\Entity;
 
 use App\Repository\SkillsRepository;
 use DateTimeImmutable;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Serializer\Annotation\Groups;
@@ -24,23 +26,29 @@ abstract class Skills
      */
     private $id;
 
-    /**
-     * @var Field
-     * @ORM\ManyToOne(targetEntity=Field::class, inversedBy="skills")
-     */
-    private $field;
 
     /**
      * @var Level
      * @ORM\ManyToOne(targetEntity=Level::class, inversedBy="skills")
      */
     private $level;
+    /**
+     * @Assert\Count(
+     *      min = 1,
+     *      max = 10,
+     *      minMessage = " Jacob You must specify at least one field",
+     *      maxMessage = "Jacob You cannot specify more than {{ limit }} fields"
+     * )
+     * @var Field[]
+     * @ORM\ManyToMany(targetEntity=Field::class, inversedBy="skills")
+     */
+    private $fields;
 
     /**
-     * @var string
+     * @var array
      * @Groups({"full_user"})
      */
-    private $fieldDescription;
+    private $fieldsDescription=[];
 
     /**
      * @var string
@@ -66,10 +74,22 @@ abstract class Skills
     private $updatedAt;
 
 
+    /**
+     * @ORM\Column(type="string", length=50, nullable=true)
+     */
+    private $visibility;
+
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     */
+    private $title;
+
+
     public function __construct()
     {
-        $this->createdAt=new DateTimeImmutable();
+        $this->createdAt=new \DateTime();;
         $this->updatedAt=new \DateTime();
+        $this->fields = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -77,17 +97,6 @@ abstract class Skills
         return $this->id;
     }
 
-    public function getField(): ?Field
-    {
-        return $this->field;
-    }
-
-    public function setField(?Field $field): self
-    {
-        $this->field = $field;
-
-        return $this;
-    }
 /**
     public function getStatus(): ?string
     {
@@ -114,6 +123,42 @@ abstract class Skills
         return $this;
     }
 
+    /**
+     * @return Collection|Field[]
+     */
+    public function getFields(): Collection
+    {
+        return $this->fields;
+    }
+
+    public function addField(Field $field): self
+    {
+        if (!$this->fields->contains($field)) {
+            $this->fields[] = $field;
+        }
+
+        return $this;
+    }
+
+    public function removeField(Field $field): self
+    {
+        $this->fields->removeElement($field);
+
+        return $this;
+    }
+
+    public function getVisibility(): ?string
+    {
+        return $this->visibility;
+    }
+
+    public function setVisibility(?string $visibility): self
+    {
+        $this->visibility = $visibility;
+
+        return $this;
+    }
+
     public function getDescription(): ?string
     {
         return $this->description;
@@ -126,6 +171,48 @@ abstract class Skills
         return $this;
     }
 
+    /**
+     * @return array
+     */
+    public function getFieldsDescription()
+    {
+        if(empty($this -> fieldsDescription) && count($this->fields)>0){
+            foreach ($this->fields as $field){
+                $this->fieldsDescription[]= $field->getDescription ();
+            }
+
+        }
+        return $this -> fieldsDescription;
+    }
+
+    /**
+     * @param array|Collection $fieldsDescription
+     */
+    public function setFieldsDescription($fieldsDescription):self
+    {
+        $this -> fieldsDescription = $fieldsDescription instanceof Collection? $fieldsDescription: new ArrayCollection($fieldsDescription) ;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getLevelDescription()
+    {
+        if(empty($this->levelDescription)&&!empty($this->level)){
+            $this->levelDescription=$this->level->getDescription ();
+        }
+        return $this -> levelDescription;
+    }
+
+    /**
+     * @param string $levelDescription
+     */
+    public function setLevelDescription(string $levelDescription): self
+    {
+        $this -> levelDescription = $levelDescription;
+        return $this;
+    }
     public function getCreatedAt(): ?\DateTimeInterface
     {
         return $this->createdAt;
@@ -150,44 +237,8 @@ abstract class Skills
         return $this;
     }
 
-    /**
-     * @return string
-     */
-    public function getFieldDescription()
-    {
-        if(empty($this -> fieldDescription) && !empty($this->field)){
-           $this->fieldDescription= $this->field->getDescription ();
-        }
-        return $this -> fieldDescription;
-    }
-
-    /**
-     * @param string $fieldDescription
-     */
-    public function setFieldDescription(string $fieldDescription):self
-    {
-        $this -> fieldDescription = $fieldDescription;
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getLevelDescription()
-    {
-        if(empty($this->levelDescription)&&!empty($this->level)){
-            $this->levelDescription=$this->level->getDescription ();
-        }
-        return $this -> levelDescription;
-    }
-
-    /**
-     * @param string $levelDescription
-     */
-    public function setLevelDescription(string $levelDescription): self
-    {
-        $this -> levelDescription = $levelDescription;
-        return $this;
+    public function __toString() {
+        return $this->getTitle ();
     }
 
     /**
@@ -196,5 +247,17 @@ abstract class Skills
     public function onPreUpdate()
     {
         $this->setUpdatedAt (new \DateTime());
+    }
+
+    public function getTitle(): ?string
+    {
+        return empty($this->title)?$this->getFields ()->current ():$this->title;
+    }
+
+    public function setTitle(?string $title): self
+    {
+        $this->title = $title;
+
+        return $this;
     }
 }

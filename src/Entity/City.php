@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Repository\CityRepository;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Symfony\Component\Intl\Countries;
 use Symfony\Component\Validator\Constraints as Assert;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -80,8 +81,9 @@ class City
 
     public function setFullName()
     {
+        \Locale::setDefault('en');
         if(!$this->fullName && $this->name && $this->country){
-            $this->fullName =$this->name.' ('.$this->country->getName().')';
+            $this->fullName =$this->name.' ('.strtoupper (Countries::getName($this->country->getName())).')';
         }
         return $this;
     }

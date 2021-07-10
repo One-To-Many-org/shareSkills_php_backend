@@ -47,6 +47,7 @@ class User implements UserInterface
     private $userName;
 
     /**
+     * @Assert\NotBlank(message="Veillez fournir un mot de pass")
      * @ORM\Column(type="string", length=255)
      */
     private $password;
@@ -83,7 +84,7 @@ class User implements UserInterface
     private $birthDate;
 
     /**
-     * @ORM\Column(type="json", nullable=true)
+     * @ORM\Column(type="json", nullable=true,columnDefinition="ENUM('ROLE_ADMIN','ROLE_USER')")
      * @Groups({"full_user", "short_user"})
      */
     private $roles = [];
@@ -101,6 +102,10 @@ class User implements UserInterface
     private $adresse;
 
     /**
+     * @Assert\Choice(
+     *     choices = {"Mr", "Mme","other"},
+     *     message = "Choose a valid genre : Mr, Mme,other"
+     * )
      * @ORM\Column(type="string", length=100,columnDefinition="ENUM('Mr', 'Mme','other')")
      * @Groups({"full_user", "short_user"})
      */
@@ -157,6 +162,7 @@ class User implements UserInterface
 
     /**
      * @ORM\Column(type="datetime_immutable",nullable=true,options={"default": "CURRENT_TIMESTAMP"})
+     *  @Groups({"full_user"})
      */
     private $createdAt;
 
@@ -173,6 +179,7 @@ class User implements UserInterface
         $this->ownSkills = new ArrayCollection();
         $this->searchedSkills = new ArrayCollection();
         $this->createdAt=new \DateTimeImmutable();
+        $this->updatedAt=new \DateTime();
         $this->roles[]='ROLE_USER';
     }
 
@@ -396,11 +403,11 @@ class User implements UserInterface
     }
 
     /**
-     * @param ArrayCollection |  Training [] $trainings
+     * @param Collection |  Training [] $trainings
      */
     public function setTrainings($trainings)
     {
-        $this -> trainings = $trainings instanceof ArrayCollection ?$trainings:new ArrayCollection($trainings);
+        $this -> trainings = $trainings instanceof Collection ?$trainings:new ArrayCollection($trainings);
 
         foreach ($this->trainings as $training){
             /**
@@ -564,7 +571,7 @@ class User implements UserInterface
     public function setRoles(?array $roles): self
     {
         if($roles){
-            $this->roles = $roles;
+            $this->roles =array_unique (array_merge ($roles,$this->roles));
         }
         return $this;
     }
@@ -581,6 +588,7 @@ class User implements UserInterface
 
     public function __call($name, $arguments)
     {
+        return $this->$name.'('.implode (',',$arguments).')';
     }
 
     /**
