@@ -33,8 +33,10 @@ class UserFixtures extends Fixture
          */
         $levels=$manager->getRepository (Level::class)->findAll ();
 
-        for($i=0; $i<mt_rand (6,10); $i++){
+        $countries=["AF","AX","CI","BJ","BE","CA","EC","BJ","EG","BJ","NG","TG","NG","CI","SN","TG","BF","BJ","FR","US"];
 
+        for($i=0; $i<mt_rand (8,15); $i++){
+            $city=$cities[mt_rand (0,count($cities)-1)];
             $user=new User();
             $user
                 ->setEmail ($faker->email)
@@ -46,13 +48,16 @@ class UserFixtures extends Fixture
                 ->setProfileDescription ($faker->paragraphs (mt_rand (3,7),true))
                 ->setUpdatedAt (new \DateTime($faker->date ('2021-05-01','now')))
                 ->setCreatedAt (new \DateTimeImmutable($faker->date ('2019-01-01','2021-05-01')))
-                ->setCity ($cities[mt_rand (0,count($cities)-1)]->getFullName())
+                ->setCity ($city->getFullName())
                 ->setUserName ($faker->name.'-'.mt_rand (10,125))
                 ->setPhone ($faker->phoneNumber)
                 ->setAdresse ($faker->address)
                 ->setRoles ([]);
             ;
           if($i<4){
+              if($i==0){
+                  $user->setEmail ('root@gmail.com');
+              }
               $user->setPassword ("toor");
               if($i<2){
                   $user->setRoles (['ROLE_ADMIN']);
@@ -65,7 +70,7 @@ class UserFixtures extends Fixture
                 $training= $random>10 ?new Training(): new Experience();
                 $training
                     ->setCity ($faker->city)
-                    ->setCountry ($faker->country)
+                    ->setCountry ($countries[mt_rand (0,count($countries)-1)])
                     ->setDescription ($faker->paragraph (5,true))
                     ->setInstitution ($faker->company)
                     ->setQualification ($faker->jobTitle)
@@ -82,9 +87,13 @@ class UserFixtures extends Fixture
             for($k=0; $k<mt_rand (4,8); $k++){
                 $random=mt_rand (0,20);
                 $skills=$random>10? new OwnSkill(): new SearchedSkill();
+
                 $skills
                     ->setDescription ($faker->paragraphs (5,true))
-                    ->setField ($fields[mt_rand (0,count($fields)-1)])
+                    ->addField ($fields[mt_rand (0,count($fields)-1)])
+                    ->addField ($fields[mt_rand (0,count($fields)-1)])
+                    ->addField ($fields[mt_rand (0,count($fields)-1)])
+                    ->addField ($fields[mt_rand (0,count($fields)-1)])
                     ->setLevel ($levels[mt_rand (0,count($levels)-1)])
                     ->setUpdatedAt (new \DateTime($faker->date ('2021-05-01','now')))
                     ->setCreatedAt (new \DateTimeImmutable($faker->date ('2019-01-01','2021-05-01')))

@@ -11,8 +11,9 @@ class CityFixtures extends Fixture
 {
     public function load(ObjectManager $manager)
     {
-        $cities=['Parakou','Lomé','Cotonou','Porto-Novo','Ouidah','Abomey','Aneho','Aflao','Bobo Dioulasso','Lomé','Ouagadougou','Accra','Abidjan','Gagnoa','Noe'];
-        $countries=['BENIN','TOGO','GHANA','BURKINA-FASO','NIGER','COTE-D\'IVOIRE'];
+        $cities=['Parakou','Lomé','Cotonou','Porto-Novo','Ouidah','Dakar','Lagos','Abomey','Aneho','Ibadan','Thies','Enugu','Kasamance','Port-Hancourt','Aflao','Bobo Dioulasso','Lomé','Ouagadougou','Accra','Abidjan','Gagnoa','Noe'];
+       // $countries=['BENIN','TOGO','GHANA','BURKINA-FASO','NIGER','COTE-D\'IVOIRE'];
+        $countries=['BJ','TG','GH','BF','NE','NG','CI','SN'];
         $countriesObj=[];
 
         foreach ($countries as $countrieName){

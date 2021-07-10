@@ -10,7 +10,7 @@ class FieldFixtures extends Fixture
 {
     public function load(ObjectManager $manager)
     {
-        $fields=['Mathématiques','Physiques','Biology','English'];
+        $fields=['Mathématiques','Physiques','Biology','English','Agronomy','Economy'];
 
         foreach ($fields as $fieldName){
             $field = new Field();
