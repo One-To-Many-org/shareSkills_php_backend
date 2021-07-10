@@ -7,6 +7,7 @@ use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\ORM\Persisters\PersisterException;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Serializer\Annotation\Groups;
 /**
@@ -241,14 +242,6 @@ abstract class Skills
         return $this->getTitle ();
     }
 
-    /**
-     * @ORM\PreUpdate
-     */
-    public function onPreUpdate()
-    {
-        $this->setUpdatedAt (new \DateTime());
-    }
-
     public function getTitle(): ?string
     {
         return empty($this->title)?$this->getFields ()->current ():$this->title;
@@ -260,4 +253,23 @@ abstract class Skills
 
         return $this;
     }
+    /**
+     * @ORM\PreUpdate
+     */
+    public function onPreUpdate()
+    {
+        $this->setUpdatedAt (new \DateTime());
+    }
+
+    /**
+     * @ORM\PrePersist
+     */
+    public function onPrePersist()
+    {
+        $entityName="skill";
+        if (empty($this->fields)){
+            throw new \Exception("You are not allowed to persist $entityName with empity Fields");
+        }
+    }
+
 }
