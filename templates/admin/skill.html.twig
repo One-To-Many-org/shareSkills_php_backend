@@ -1,0 +1,29 @@
+
+{%  set skills=field.customOption('own')?entity.instance.ownSkills:entity.instance.searchedSkills %}
+
+<table style="width:100%">
+
+    <tr>
+        <th>Level</th>
+        {% for skill in skills %}
+            <td>
+                <em> &nbsp; &nbsp;&nbsp;{{~skill.level}}</em>
+
+            </td>
+        {% endfor %}
+    </tr>
+
+    <tr>
+        <th>Field</th>
+        {% for skill in skills %}
+            <td>
+                <ul>
+                    {% for  field in skill.fields %}
+                        <li>{{ field }}</li>
+                    {% endfor %}
+                </ul>
+            </td>
+        {% endfor %}
+    </tr>
+</table>
+

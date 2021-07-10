@@ -3,6 +3,8 @@
 namespace App\Controller\Admin;
 
 use App\Entity\Experience;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
@@ -21,7 +23,7 @@ class ExperienceCrudController extends AbstractCrudController
     public function configureFields(string $pageName): iterable
     {
         return [
-            IdField::new('id')->hideOnForm ()->hideOnIndex (),
+            IdField::new('id')->hideOnForm (),
             TextField::new('Institution')->setLabel ('Company'),
             TextField::new('City'),
             CountryField::new('Country'),
@@ -32,8 +34,8 @@ class ExperienceCrudController extends AbstractCrudController
             DateTimeField::new('EndDate'),
             AssociationField::new ('user'),
             TextareaField::new('description'),
-            DateTimeField::new('createdAt')->onlyWhenCreating (),
-            DateTimeField::new('updatedAt'),
+            DateTimeField::new('createdAt')->onlyOnDetail (),
+            DateTimeField::new('updatedAt')->onlyOnDetail (),
         ];
     }
 
@@ -41,6 +43,13 @@ class ExperienceCrudController extends AbstractCrudController
     {
         return $crud
             ->setPaginatorPageSize (6)
+            ;
+    }
+    public function configureActions(Actions $actions): Actions
+    {
+        return $actions
+            ->add (Crud::PAGE_INDEX,Action::DETAIL)
+            ->remove (crud::PAGE_INDEX,Action::EDIT)
             ;
     }
 

@@ -1,0 +1,11 @@
+
+
+
+    <ul>
+        {% for field in entity.instance.fields%}
+            <li>
+                <em> &nbsp; &nbsp;&nbsp;{{field}}</em>
+
+            </li>
+        {% endfor %}
+    </ul>
