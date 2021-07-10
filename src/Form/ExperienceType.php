@@ -22,8 +22,8 @@ class ExperienceType extends AbstractType
             ->add('startedDate',DateTimeType::class,['widget' => 'single_text'])
             ->add('endDate',DateTimeType::class,['widget' => 'single_text'])
             ->add('description')
-            ->add('createdAt')
-            ->add('updatedAt')
+           // ->add('createdAt',DateTimeType::class,['widget' => 'single_text'])
+            ->add('updatedAt',DateTimeType::class,['widget' => 'single_text'])
             ->add('user')
         ;
     }

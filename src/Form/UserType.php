@@ -42,8 +42,8 @@ class UserType extends AbstractType
                 'entry_type' => OwnSkillType::class,'allow_add' => true])
             ->add ('searchedSkills',CollectionType::class,[
                 'entry_type' => SearchedSkillType::class,'allow_add' => true])
-            ->add('createdAt')->setRequired (false)
-            ->add('updatedAt')
+         //   ->add('createdAt',DateTimeType::class,['widget' => 'single_text'])->setRequired (false)
+            ->add('updatedAt',DateTimeType::class,['widget' => 'single_text'])
 
         ;
 
