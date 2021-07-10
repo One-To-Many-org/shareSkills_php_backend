@@ -4,7 +4,6 @@
 namespace App\Service;
 
 
-use App\Exceptions\CustomException;
 use Exception;
 use Symfony\Component\HttpFoundation\AcceptHeader;
 use Symfony\Component\HttpFoundation\Request;
@@ -60,7 +59,7 @@ final class MediaTypesService
      * @param string $ext
      * @return string|null
      */
-    public function guesstMimeType(string $ext)
+    public function guesstMimeType(string $ext): ?string
     {
         $mimes=$this->mimeType->getMimeTypes ($ext);
         $mime=is_array ($mimes) && count($mimes)>0?current ($mimes):$mimes;
@@ -98,7 +97,7 @@ final class MediaTypesService
      * @param array $extensionMapper
      * @return array
      */
-    public function getAcceptFormats(Request $request,$extension=true,array $extensionMapper=[])
+    public function getAcceptFormats(Request $request, bool $extension=true, array $extensionMapper=[]): array
     {
         $accepts= [];
         $acceptHeader = AcceptHeader::fromString($request->headers->get(self::ACCEPT));
@@ -136,12 +135,13 @@ final class MediaTypesService
      * @return string|null
      * @throws Exception
      */
-    public function resolveAcceptWith(Request $request,array $supports=[],$exceptionOnfail=true,$extension=true,array $extensionMapper=[]){
+    public function resolveAcceptWith(Request $request, array $supports=[], bool $exceptionOnfail=true, bool $extension=true, array $extensionMapper=[]): ?string
+    {
         $sortedAccepts=$this->getAcceptFormats ($request,$extension,$extensionMapper);
         $hasAccepts=count ($sortedAccepts)>0;
 
         //no support provide and the request has Accept
-        if(count ($supports)<1 && $hasAccepts ){
+        if(empty ($supports) && $hasAccepts ){
             return  current ( $sortedAccepts );
         }
 
@@ -181,10 +181,11 @@ final class MediaTypesService
 
     /**
      * sniff data and return the media type extension or empty if on failure to decode
-     * @param string $data
+     * @param mixed $data
+     * @param bool $extension
      * @return string
      */
-    public function sniffData($data,$extension=true): ?string
+    public function sniffData($data, bool $extension=true): ?string
     {
         //if it's string we check if it's json or xml in prioritary note to return simple txt
         if(is_string ($data)){
@@ -247,7 +248,7 @@ final class MediaTypesService
             return false;
         }
 
-        return !($doc === false);
+        return $doc !== false;
     }
 
     public function isJson(string $jsonString): bool

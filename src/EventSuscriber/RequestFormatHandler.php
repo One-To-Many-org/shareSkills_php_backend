@@ -83,7 +83,7 @@ class RequestFormatHandler implements EventSubscriberInterface
              */
             if($this->isSendingData ($request)) {
 
-                $contentType = $request -> headers -> get ( self::CONTENT_TYPE );
+                $contentType = $request ->getContentType ();
 
                 if (empty( $contentType )) {
                     $errorMessage = self::NO_CONTENT_TYPE_MESSAGE.$this->getAcceptFormatMessage ();
@@ -98,10 +98,9 @@ class RequestFormatHandler implements EventSubscriberInterface
              * S'il doit recevoir une donnée il faut un accept par défaut on lui met application/json
              */
             if (empty($errorMessage) && $this->willReceiveData ($request)){
-                    $acceptHeader = AcceptHeader::fromString($request->headers->get('Accept'));
                     $accept=$this->resolveAccept ($request);
                     if(empty($accept)){
-                        if(count ($acceptHeader->all ())>0){
+                        if(count ($request->getAcceptableContentTypes ())){
                             $errorMessage=sprintf (self::NO_SUPPORTED_RETURN_TYPE,$this->getSupportFormatAsString ());
                         }else{
                             $accept='application/json';
@@ -129,7 +128,7 @@ class RequestFormatHandler implements EventSubscriberInterface
             $contentType=$event->getResponse ()->headers->get (self::CONTENT_TYPE);
             if(empty($contentType)){
                 $contentType=$event->getRequest ()->headers->get (self::ACCEPT);
-                if($event->getResponse ()->isSuccessful () && empty($content)){
+                if($event->getResponse ()->isSuccessful () && empty($contentType)){
                     $event->getResponse ()->headers->set (self::CONTENT_TYPE,$contentType);
                 }
             }
@@ -165,14 +164,6 @@ class RequestFormatHandler implements EventSubscriberInterface
 
     public function redirectToErrorController(ControllerEvent $event,$message){
         $controllerResolver= new ControllerResolver();
-
-        /**
-        //Alternative
-        $callable = function($message) {
-        $controller=new BadRequestController();
-        return  $controller->index ($message);
-        };
-         **/
             $request=$event->getRequest ();
             $request->attributes->add (['_route'=>'bad_request',"_controller" => "App\Controller\ErrorController::badRequest","message"=>$message]);
             $callable=$controllerResolver->getController ($request);
@@ -189,8 +180,7 @@ class RequestFormatHandler implements EventSubscriberInterface
      * @return string
      */
     public function resolveAccept(Request $request){
-        // $acceptHeaderPourTester='text/plain;q=0.5, text/html, text/*;q=0.8, */*;q=0.3',application/xml;q=0.9,application/json;q=0.8
-        //doit retourner application/xml avec $acceptHeaderPourTester
+        // $acceptHeaderPourTester='text/plain;q=0.5, text/html, text/*;q=0.8, */*;q=0.3',application/xml;q=0.9,application/json;q=0. doit retourner application/xml avec $acceptHeaderPourTester
        $accept=  $this->mediaTypeService->resolveAcceptWith ($request,array_keys  (self::$supportsFormat),true,false);
        return  array_key_exists ($accept,self::$manyAcceptResolver)?self::$manyAcceptResolver[$accept]:$accept;
 

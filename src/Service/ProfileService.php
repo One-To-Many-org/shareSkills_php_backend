@@ -17,6 +17,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 
 class ProfileService implements ProfileServiceInterface
@@ -24,12 +25,14 @@ class ProfileService implements ProfileServiceInterface
     const OWNER_GROUPS='full_user';
     const GUEST_GROUPS="short_user";
     const DATA_FIELD='data';
+    const SUPPORT=['xml','json'];
     private $em;
     private $serializer;
     private $ownerService;
     private $typeMapper;
     private $formFactory;
     private $decoder;
+    private $validator;
 
     /**
      * @var User $user
@@ -37,7 +40,7 @@ class ProfileService implements ProfileServiceInterface
     private static $user;
 
     public function __construct(EntityManagerInterface $em, ProfileSerializer $serializer, RessourceOwnerService $ownerService,
-                                MediaTypesService $typeMapper, FormFactoryInterface $formFactory, DataDecoder $decoder)
+                                MediaTypesService $typeMapper, FormFactoryInterface $formFactory, DataDecoder $decoder,ValidatorInterface $validator)
     {
         $this->em= $em;
         $this->serializer=$serializer;
@@ -45,6 +48,7 @@ class ProfileService implements ProfileServiceInterface
         $this->typeMapper=$typeMapper;
         $this->formFactory=$formFactory;
         $this->decoder=$decoder;
+        $this->validator=$validator;
     }
 
     /**
@@ -56,13 +60,33 @@ class ProfileService implements ProfileServiceInterface
         $acceptFormat=$this->typeMapper->resolveAcceptWith  ($request);
         $dataField=$isMultipartRequest?self::DATA_FIELD:"";
         $data=$isMultipartRequest?$request->get (self::DATA_FIELD):$request->getContent ();
+
+        if(!$data){
+            throw new CustomException("No data provide to create user");
+        }
+
         $contentFormat=$this->typeMapper->getContentFormat ($request,$dataField);
-        $profile=$this->newWithFormSubmit ($this->decoder->decode ($data,$contentFormat));
+
+        if(in_array ($contentFormat,self::SUPPORT)){
+            try {
+                $decodeData=$this->decoder->decode ($data,$contentFormat);
+                if (!is_array ($decodeData)){
+                    throw new CustomException();
+                }
+            }catch (\Exception $exception){
+                throw new CustomException("We are unable to decode your data it's not valid data ".$exception->getMessage ());
+            }
+
+        }else{
+            throw new CustomException("We don't support  $contentFormat format");
+        }
+
+        $profile=$this->newWithFormSubmit ($decodeData);
         $this->handlePicture ($request,$profile);
         $this->handleRelations ($profile);
         $this->em->persist ($profile);
         $this->em->flush();
-        $data=$this->serializer->serialize ($profile,$acceptFormat,['groups'=>self::OWNER_GROUPS]);
+        $data=$this->serializer->serializer->serialize ($profile,$acceptFormat,['groups'=>self::OWNER_GROUPS]);
         return $data;
     }
 
@@ -76,13 +100,28 @@ class ProfileService implements ProfileServiceInterface
         $acceptFormat=$this->typeMapper->resolveAcceptWith  ($request);
         $dataField=$isMultipartRequest?self::DATA_FIELD:"";
         $data=$isMultipartRequest?$request->get (self::DATA_FIELD):$request->getContent ();
+        if(!$data){
+            throw new CustomException("No data provide to update user");
+        }
         $contentFormat=$this->typeMapper->getContentFormat ($request,$dataField);
         /**
          * @var User $profile
          */
         $profile=$this->loadUser ($id);
         $form=$this->formFactory->create (UserType::class,$profile);
-        $arrayOfContent= $this->decoder->decode ($data,$contentFormat);
+        if(in_array ($contentFormat,self::SUPPORT)){
+            try {
+                $arrayOfContent= $this->decoder->decode ($data,$contentFormat);
+                if (!is_array ($arrayOfContent)){
+                    throw new CustomException();
+                }
+            }catch (\Exception $exception){
+                throw new CustomException("We are unable to decode your data it's not valid data");
+            }
+        }else{
+            throw new CustomException("We don't support  $contentFormat format");
+        }
+
         $form->submit($arrayOfContent,false);
 
         $this->handlePicture ($request,$profile);
@@ -103,7 +142,7 @@ class ProfileService implements ProfileServiceInterface
          */
         $user= $this->loadUser ($id);
         if ($user && $user instanceof User){
-            $groups=$this->ownerService->isOwner ($user)?self::OWNER_GROUPS:self::GUEST_GROUPS;
+            $groups=$this->ownerService->isOwner ($user) ||$this->ownerService->isAdmin ($user)?self::OWNER_GROUPS:self::GUEST_GROUPS;
             $data=$this->serializer->serializeOne ($user,$acceptFormat,['groups'=>$groups]);
             return $data;
         }
@@ -140,13 +179,32 @@ class ProfileService implements ProfileServiceInterface
      */
     protected function newWithFormSubmit(array $data){
         $profile=new User();
-        $form=$this->formFactory->create (UserType::class,$profile);
+        $form=$this->formFactory->create (UserType::class,$profile, ['csrf_protection' => false]);
         $form->submit($data,false);
         /**
          * @var User $profile
          */
 
         $profile=$form->getData ();
+
+        if(!$form->isValid ()){
+            $errors = $this->validator->validate($profile);
+            if (count($errors) > 0) {
+                $errorsString="";
+                foreach ($errors as $error){
+                    $errorsString.= (string) $error;
+                }
+                throw new CustomException("Invalid data ".str_replace ('Object(App\\Entity\\User)','',$errorsString));
+            }
+             /**
+             $errors=$form->getErrors (true);
+             $current=$errors->current ();
+             $param=$current->getMessageParameters ();
+             $message=$current->getMessage ();
+             $message=sprintf ($message." %s ",implode (',',$param));
+             throw new CustomException($message);
+            **/
+        }
         $profile=$this->handleRelations ($profile);
        return $profile;
     }
@@ -172,22 +230,38 @@ class ProfileService implements ProfileServiceInterface
             /**
              * @var OwnSkill |SearchedSkill $skill
              */
-            if(empty($skill->getField ())){
+            if(empty($skill->getLevel ())){
                 $lDescrition=$skill->getLevelDescription ();
-                /**
-                 * @var Level $level
-                 */
-                $level=$this->em->getRepository (Level::class)->findOneBy (["description"=>$lDescrition]);
-                $skill->setLevel ($level);
+                if($lDescrition){
+                    /**
+                     * @var Level $level
+                     */
+                    $level=$this->em->getRepository (Level::class)->findOneBy (["description"=>$lDescrition]);
+                    if(!$level){
+                        throw new CustomException(" Unknow Field whic description is $lDescrition");
+                    }
+                    $skill->setLevel ($level);
+                }else{
+                    throw new CustomException("You provide a skills without  no level, provide a level for by Skill");
+                }
+
             }
-            if(empty($skill->getField ())){
-                $fDescription=$skill->getFieldDescription ();
-                /**
-                 * @var Field $field
-                 */
-                $field=$this->em->getRepository (Field::class)->findOneBy (["description"=>$fDescription]);
-                $skill->setField ($field);
-            }
+
+                $fDescriptions=$skill->getFieldsDescription ();
+               if (count ($fDescriptions)) {
+                   /**
+                    * @var Field $field
+                    */
+                   foreach ($fDescriptions as $description) {
+                       $field = $this -> em -> getRepository ( Field::class ) -> findOneBy ( ["description" => $description] );
+                       if(!$field){
+                           throw new CustomException(" Unknow Field whic description is $description");
+                       }
+                       $skill -> addField ( $field );
+                   }
+               }else{
+                   throw new CustomException("You provide a skills without  no field, provide a least one Field by Skill");
+               }
 
             if (empty($skill->getUser())){
                 $skill->setUser($profile);
@@ -265,7 +339,7 @@ class ProfileService implements ProfileServiceInterface
      public function isAllowed($userId,$action='edit or delete'){
          $user= $this->loadUser ($userId);
 
-         if( $this->ownerService->isOwner ($user)){
+         if( $this->ownerService->isOwner ($user) || $this->ownerService->isAdmin ($user)){
              return true ;
          }else{
              throw new \Exception("You are not allowed to $action this profil");
